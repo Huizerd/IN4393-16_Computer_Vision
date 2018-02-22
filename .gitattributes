@@ -1,0 +1,10 @@
+# Auto detect text files and perform LF normalization
+
+* text = auto
+
+# Store following files in binary to prevent corruption
+
+*.jpg -crlf -diff -merge
+*.png -crlf -diff -merge
+*.gdoc -crlf -diff -merge
+*.pdf -crlf -diff -merge

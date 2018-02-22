@@ -1,0 +1,4 @@
+# Ignore PDFs and Google Docs
+
+*.pdf
+*.gdoc

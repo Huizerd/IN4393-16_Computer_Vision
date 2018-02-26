@@ -5,7 +5,7 @@ function [Ix, Iy] = gradmag(image, sigma)
 
 G = gaussian(sigma);
 
-Ix = normalConv(image, gaussianDer(G, sigma));
-Iy = normalConv(image, gaussianDer(G, sigma)');
+Ix = conv2(image, gaussianDer(G, sigma), 'same');
+Iy = conv2(image, gaussianDer(G, sigma)', 'same');
 
 end

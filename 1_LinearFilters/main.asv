@@ -35,6 +35,24 @@ for i = 1:length(sigma)
 
 end
 
+% figure('Name', 'Orientation 1')
+% imshow(orientationM(:,:,1), [-pi pi])
+% colormap(hsv)
+% colorbar
+% 
+% figure('Name', 'Orientation end')
+% imshow(orientationM(:,:,end), [-pi pi])
+% colormap(hsv)
+% colorbar
+% 
+% figure('Name', 'Magnitude 1')
+% imshow(magnitudeM(:,:,1))
+% colorbar
+% 
+% figure('Name', 'Magnitude end')
+% imshow(magnitudeM(:,:,end)) 
+% colorbar
+
 % Set threshold
 threshold = 2.5:0.5:4;
 
@@ -56,13 +74,14 @@ impulse(ceil(sz/2), ceil(sz/2)) = 255;
 sigma = sigma(1);
 
 figure('Name', 'Derivatives')
-derivatives = ["x", "y", "xx", "yy", "xy", "yx"];
+derivatives = ['x' 'y' 'xx' 'yy' 'xy'];
 
 for k = 1:length(derivatives)
-    
-    derIm = ImageDerivatives(impulse, sigma, derivatives(k));
     subplot(2, 3, k)
-    imshow(derIm,'InitialMagnification',200)
-    title(derivatives(k))
-    
-end
+    derIm = Im
+x  = ImageDerivatives(impulse, sigma, 'x');
+y  = ImageDerivatives(impulse, sigma, 'y');
+xx = ImageDerivatives(impulse, sigma, 'xx');
+yy = ImageDerivatives(impulse, sigma, 'yy');
+xy = ImageDerivatives(impulse, sigma, 'xy');
+yx = ImageDerivatives(impulse, sigma, 'yx');

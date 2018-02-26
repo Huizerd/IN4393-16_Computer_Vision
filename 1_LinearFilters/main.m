@@ -4,7 +4,7 @@ clc; clear; close all
 
 image = imread('zebra.png');
 
-sigma = 1:5:21;
+sigma = 1:5;
 magnitudeM   = zeros(size(image, 1), size(image, 2), length(sigma));
 orientationM = magnitudeM;
 
@@ -28,35 +28,35 @@ for i = 1:length(sigma)
 
 end
 
-% figure('Name', 'Orientation 1')
-% imshow(orientationM(:,:,1), [-pi pi])
-% colormap(hsv)
-% colorbar
-% 
-% figure('Name', 'Orientation end')
-% imshow(orientationM(:,:,end), [-pi pi])
-% colormap(hsv)
-% colorbar
-% 
-% figure('Name', 'Magnitude 1')
-% imshow(magnitudeM(:,:,1))
-% colorbar
-% 
-% figure('Name', 'Magnitude end')
-% imshow(magnitudeM(:,:,end))
-% colorbar
+figure('Name', 'Orientation 1')
+imshow(orientationM(:,:,1), [-pi pi])
+colormap(hsv)
+colorbar
+
+figure('Name', 'Orientation end')
+imshow(orientationM(:,:,end), [-pi pi])
+colormap(hsv)
+colorbar
+
+figure('Name', 'Magnitude 1')
+imshow(magnitudeM(:,:,1))
+colorbar
+
+figure('Name', 'Magnitude end')
+imshow(magnitudeM(:,:,end)) 
+colorbar
 
 % Set threshold
 threshold = 0:0.2:2;
 
-% for j = 1:length(threshold)
-%     
-%     binary = magnitudeM(:,:,end) > threshold(j);
-%     figure('Name', 'Threshold end')
-%     imshow(binary)
-%     colorbar
-%     
-% end
+for j = 1:length(threshold)
+    
+    binary = magnitudeM(:,:,end) > threshold(j);
+    figure('Name', 'Threshold end')
+    imshow(binary)
+    colorbar
+    
+end
 
 sz = 11;
 impulse = zeros(sz);

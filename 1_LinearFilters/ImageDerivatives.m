@@ -1,5 +1,7 @@
 function F = ImageDerivatives(image, sigma, type)
+
 G = gaussian(sigma);
+
 if type == 'x'
     F = normalConv(image, gaussianDer(G, sigma));
 elseif type == 'y'

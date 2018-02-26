@@ -1,5 +1,3 @@
-% Correct??
-
 function G = gaussian(sigma)
 
 sz = floor(3*sigma + 0.5);

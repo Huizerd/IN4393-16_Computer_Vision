@@ -2,3 +2,7 @@
 
 *.pdf
 *.gdoc
+
+# And MATLAB's temporary files
+
+*.asv

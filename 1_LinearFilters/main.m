@@ -28,7 +28,7 @@ for i = 1:length(sigma)
     title(['Difference for \sigma = ' num2str(sigma(i))])
 
     % Gradients
-    [Ix, Iy] = gradmag(image, sigma(i));
+    [Ix, Iy] = gradMag(image, sigma(i));
     
     magnitudeM(:,:,i)   = sqrt(Ix.^2 + Iy.^2);
     orientationM(:,:,i) = atan2(Iy, Ix);
@@ -60,7 +60,7 @@ derivatives = ["x", "y", "xx", "yy", "xy", "yx"];
 
 for k = 1:length(derivatives)
     
-    derIm = ImageDerivatives(impulse, sigma, derivatives(k));
+    derIm = imageDerivatives(impulse, sigma, derivatives(k));
     subplot(2, 3, k)
     imshow(derIm,'InitialMagnification',200)
     title(derivatives(k))

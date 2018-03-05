@@ -1,4 +1,4 @@
-function [Ix, Iy] = gradmag(image, sigma)
+function [Ix, Iy] = gradMag(image, sigma)
 
 % Ix = (image(2:end,:) - image(1:end-1,:)) / 2;
 % Iy = (image(:,2:end) - image(:,1:end-1)) / 2;

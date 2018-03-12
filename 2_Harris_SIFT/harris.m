@@ -1,4 +1,4 @@
-function [r, c, laplacian] = harris(im, sigma)
+function [R, laplacian] = harris(im, sigma)
 % inputs: 
 % im: double grayscale image
 % sigma: integration-scale
@@ -46,9 +46,6 @@ R = ((R>threshold) & ((imdilate(R, strel('square', 3))==R))) ; %.* sigma;
 % imshow(R,[]);
 
 % Return the coordinates
-[r,c] = find(R == 1);
-
-% Laplacian at [r, c]
-% laplacian = laplacian(R);
+% [r,c] = find(R == 1);
 
 end

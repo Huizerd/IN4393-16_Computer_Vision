@@ -8,3 +8,4 @@
 *.png -crlf -diff -merge
 *.gdoc -crlf -diff -merge
 *.pdf -crlf -diff -merge
+*.pgm -crlf -diff -merge

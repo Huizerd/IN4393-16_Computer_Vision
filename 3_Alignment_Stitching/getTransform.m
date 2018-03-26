@@ -1,4 +1,4 @@
-function [xBest, transformedImage1, transformedImage2] = getTransform(image1, image2, N, threshold)
+function [xBest, tform, transformedImage1, transformedImage2] = getTransform(image1, image2, N, threshold)
 
 %% Match Images using SIFT
 [frames1, desc1] = vl_sift(single(image1));
@@ -13,7 +13,9 @@ inliersBest = 0;
 for n = 1:N
     
     perm = randperm(length(matches));
+    disp(perm)
     P    = 3;  % 3 matches needed for 6 unknowns
+    disp(P)
     seed = perm(1:P);
 
     matchesUsed = matches(:, seed);
@@ -56,8 +58,9 @@ T = [xBest(1) xBest(2) xBest(5);
      xBest(3) xBest(4) xBest(6);
      0        0        1       ];
 
-tform = affine2d(inv(T)');
-transformedImage1 = imwarp(image2, tform, 'bicubic');
-
 tform = affine2d(T');
-transformedImage2 = imwarp(image1, tform, 'bicubic');
+transformedImage1 = imwarp(image1, tform, 'bicubic');
+
+% Transform for image2 -> image1 is returned
+tform = affine2d(inv(T)');
+transformedImage2 = imwarp(image2, tform, 'bicubic');

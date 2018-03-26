@@ -22,7 +22,7 @@ image2 = imread([imageDir images(2).name]);
 %% Image Alignment
 
 % Get transform
-[xBest, transformedImage1, transformedImage2] = getTransform(image1, image2, 100, 10);
+[xBest, ~, transformedImage1, transformedImage2] = getTransform(image1, image2, 100, 10);
 
 % Plot transforms
 figure
@@ -33,7 +33,13 @@ subplot(2,2,4); imshow(transformedImage2); title('Image 1 Transformed')
 
 %% Image Stitching
 
+imLeft  = rgb2gray(imread('left.jpg'));
+imRight = rgb2gray(imread('right.jpg'));
+stitchedImage = getStitch(imLeft, imRight);
 
+figure
+imshow(stitchedImage)
+title('Stitched Image')
 
 %% Optional Keypoint Plotting
 

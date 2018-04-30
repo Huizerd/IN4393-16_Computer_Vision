@@ -26,7 +26,7 @@ for f = 1:size(frames, 3)
     addpoints(lineSSE, f, SSE(f))
     addpoints(lineMSE, f, MSE(f))
     
-    imshow(uint8(frames(:, :, n)), 'Parent', plotFrames)
+    imshow(uint8(frames(:, :, f)), 'Parent', plotFrames)
     truesize([320 320])
     
     hold(plotFrames, 'on')

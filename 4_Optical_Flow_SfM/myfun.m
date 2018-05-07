@@ -9,14 +9,14 @@
 function Dif = myfun(L)
 
 %load the saved transformation matrix M
-load('M');
+load('Mhat');
 
 %pre-alocate the Dif matrix
-Dif = zeros(size(M,1)/2,4);
+Dif = zeros(size(Mhat,1)/2,4);
 
 %compute the residuals
-for i = 1:size(M,1)/2
-    Ai = M(i*2-1:i*2,:);
+for i = 1:size(Mhat,1)/2
+    Ai = Mhat(i*2-1:i*2,:);
     D = Ai*L*Ai' - eye(2);
     Dif(i,:) = D(:);
 end

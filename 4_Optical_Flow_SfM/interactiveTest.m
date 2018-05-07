@@ -10,7 +10,7 @@ y = randi([0 100], 100, 1);
 plot(x, y, '.');  %plot all points
 distancethreshold = 5;
 pairwisedist = hypot(x - x', y - y');  %or use pdist
-[p1, p2] = find(tril(pairwisedist <= distancethreshold & pairwisedist > 0))
+[p1, p2] = find(tril(pairwisedist <= distancethreshold & pairwisedist > 0));
 hold on;
 indexpairs = [p1, p2]';
 disp(indexpairs)

@@ -1,0 +1,10 @@
+# Ignore images
+TeddyBear/
+TeddyBearPNG/
+*.png
+
+# Ignore feature extractor code
+extract_features/
+
+# Ignore extracted features
+*.png.harhes.sift

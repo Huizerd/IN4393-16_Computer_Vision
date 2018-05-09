@@ -1,0 +1,6 @@
+# Ignore images
+model_house/
+*.png
+*.gif
+*.ppm
+*.pgm

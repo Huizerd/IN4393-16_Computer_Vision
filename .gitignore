@@ -1,8 +1,0 @@
-# Ignore all
-*
-
-# Except .m files, LICENSE, README.md and .gitignore ofcourse!
-!*.m
-!.gitignore
-!README.md
-!LICENSE

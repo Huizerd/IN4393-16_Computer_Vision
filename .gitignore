@@ -1,0 +1,7 @@
+# Ignore all
+*
+
+# Except .m files, LICENSE, README.md and .gitignore ofcourse!
+!.gitignore
+!README.md
+!LICENSE

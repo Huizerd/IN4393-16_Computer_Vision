@@ -1,7 +1,0 @@
-# Store following files in binary to prevent corruption
-
-*.jpg binary
-*.png binary
-*.gdoc binary
-*.pdf binary
-*.pgm binary

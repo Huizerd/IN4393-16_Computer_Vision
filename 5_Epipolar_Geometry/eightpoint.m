@@ -1,5 +1,7 @@
+function [F, F_denorm, Fbest] = eightpoint(A, points)
+
 A = rand(20,9);%Functie van Jessesese
-[Ua, Da, Va]    = svd(A); % Singular Value decomposition of A
+[~, ~, Va]    = svd(A); % Singular Value decomposition of A
 f               = Va(:,end); % Last column of V (corresponding to smallest singular value equals f
 F               = reshape(f, 3, 3); % Reshape f to matrix F
 
@@ -42,7 +44,7 @@ for i = 1:length(p_hat)
 end
 
 % Determine normalized F
-[Ua_norm, Da_norm, Va_norm] = svd(Anorm);
+[~, ~, Va_norm] = svd(Anorm);
 f_norm   = Va_norm(:,end);
 F_norm   = reshape(f_norm, 3, 3);
 
@@ -65,26 +67,25 @@ for n = 1:N
     seed = perm(1:P);
     p_hat_used = p_hat(:, seed);
     p_hat_acc_used = p_hat_acc(:,seed);
-%     matchesUsed = matches(:, seed);
     
     % Create new A matrix from normalized coordinates
     Aransac = zeros(P, 9);
     for i = 1:P
-        Aransac(i,:) = [p_hat(i,1)*p_hat_acc(i,1),...
-                p_hat(i,1)*p_hat_acc(i,2),...
-                p_hat(i,1),...
-                p_hat(i,2) * p_hat_acc(i,1),...
-                p_hat(i,2) * p_hat_acc(i,2),...
-                p_hat(i,2),...
-                p_hat_acc(i,1),...
-                p_hat_acc(i,2),...
+        Aransac(i,:) = [p_hat_used(i,1)*p_hat_acc_used(i,1),...
+                p_hat_used(i,1)*p_hat_acc_used(i,2),...
+                p_hat_used(i,1),...
+                p_hat_used(i,2) * p_hat_acc_used(i,1),...
+                p_hat_used(i,2) * p_hat_acc_used(i,2),...
+                p_hat_used(i,2),...
+                p_hat_acc_used(i,1),...
+                p_hat_acc_used(i,2),...
                 1];
     end
     
     % Determine fundamental matrix F
-    [V, D] = = eigs(Aransac, 1, 'smallestabs');
+    [V, ~]   = eigs(Aransac, 1, 'smallestabs');
     f_ransac = V;
-    F_ransac = reshape(f, 3, 3);
+    F_ransac = reshape(f_ransac, 3, 3);
     
     % Find inliers
     Fp = F * p_hat;
@@ -99,3 +100,4 @@ for n = 1:N
     end
 end
 
+end

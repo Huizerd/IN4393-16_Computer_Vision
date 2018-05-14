@@ -3,9 +3,10 @@
 
 clear; clc
 
-run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
+% run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
+run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
-images = ["obj02_001.png", "obj02_002.png"];
+images = ["TeddyBearPNG/obj02_001.png", "TeddyBearPNG/obj02_002.png"];
 descriptors = ["obj02_001.png.harhes.sift", "obj02_002.png.harhes.sift"];
 
 for i = 2:length(images)
@@ -64,13 +65,13 @@ for i = 2:length(images)
     end
     
     % Plot    
-    imtot = cat(2, im1,im2);
-    figure
-    imshow(imtot);
-    hold on;
+%     imtot = cat(2, im1,im2);
+%     figure
+%     imshow(imtot);
+%     hold on;
     
-    scatter(x1(:,best_matches(2,:)), y1(:,best_matches(2,:)), 'y');
-    scatter(x2(:,best_matches(3,:)) + size(im1, 2), y2(:,best_matches(3,:)), 'y');
+%     scatter(x1(:,best_matches(2,:)), y1(:,best_matches(2,:)), 'y');
+%     scatter(x2(:,best_matches(3,:)) + size(im1, 2), y2(:,best_matches(3,:)), 'y');
     
     % Create matrix A
     A = zeros(n, 9);
@@ -86,5 +87,7 @@ for i = 2:length(images)
                     y2(:,best_matches(3,row))
                     1];
     end
+    
+    [F, F_denorm, Fbest] = eightpoint(A);
     
 end

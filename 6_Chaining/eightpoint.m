@@ -3,7 +3,7 @@
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [Fbest, inliersBest] = eightpoint(A)
+function [Fbest, inliersBest] = eightpoint(A, threshold)
 
 [~, ~, Va]      = svd(A); % Singular Value decomposition of A
 f               = Va(:,end); % Last column of V (corresponding to smallest singular value equals f
@@ -41,7 +41,6 @@ p_hat_acc = T * p_acc;
 
 %% RANSAC
 n_inliersBest = 0;
-threshold = 0.1;
 N = 1000;
 for n = 1:N
     % Get 8 random pairs

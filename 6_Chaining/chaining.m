@@ -16,7 +16,12 @@ point_view_matrix = zeros(size(matches, 3), size(matches, 2));
 % Different approach for 1st pair (1-2)
 point_view_matrix(1:2, 1:size(matches, 2)) = matches(2:3, :, 1);
 
+% Trim NaN/zero rows
+point_view_matrix(:, ~any(point_view_matrix, 1)) = [];
+
 for i = 2:size(matches, 3) - 1
+    
+    disp(i)
     
     % Set intersection of indices in 1st frame of pair i and 2nd frame of
     % pair i - 1
@@ -26,7 +31,12 @@ for i = 2:size(matches, 3) - 1
     point_view_matrix(i + 1, ib) = matches(3, ia, i);
     
     % Add new matches
-    
+    new = matches(2:3, :);  % copy matches
+    new(:, ia) =[];  % delete already matched rows, so only new left
+    new(:, ~any(new, 1)) = [];  % delete NaNs
+    add = zeros(size(point_view_matrix, 1), size(new, 2));
+    add(i:i+1, :) = new;
+    point_view_matrix = [point_view_matrix add]; 
     
 % Different approach for last pair (16-1)
 % [~, ia, ib] = intersect(point_view_matrix(1, :), point_view_matrix(end, :));

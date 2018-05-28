@@ -4,3 +4,6 @@ model_house/
 *.gif
 *.ppm
 *.pgm
+
+# And data
+*.mat

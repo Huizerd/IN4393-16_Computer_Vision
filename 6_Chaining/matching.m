@@ -1,31 +1,65 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Assignment 6: Matching
+% Assignment 6: Matching -> Matching
 % Jesse Hagenaards & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-clear; clc
+function [best_matches, A] = matching(desc1, desc2, nMatches)
 
-% run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
-run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+% Image 1
+output1 = dlmread(desc1, ' ', 2, 0);
 
-%% Inputs
-images = ["TeddyBearPNG/obj02_001.png", "TeddyBearPNG/obj02_002.png",...
-    "TeddyBearPNG/obj02_003.png", "TeddyBearPNG/obj02_004.png",...
-    "TeddyBearPNG/obj02_005.png", "TeddyBearPNG/obj02_006.png",...
-    "TeddyBearPNG/obj02_007.png", "TeddyBearPNG/obj02_008.png",...
-    "TeddyBearPNG/obj02_009.png", "TeddyBearPNG/obj02_010.png",...
-    "TeddyBearPNG/obj02_011.png", "TeddyBearPNG/obj02_012.png",...
-    "TeddyBearPNG/obj02_013.png", "TeddyBearPNG/obj02_014.png",...
-    "TeddyBearPNG/obj02_015.png", "TeddyBearPNG/obj02_016.png",...
-    "TeddyBearPNG/obj02_017.png", "TeddyBearPNG/obj02_018.png",...
-    "TeddyBearPNG/obj02_019.png", "TeddyBearPNG/obj02_020.png"];
-features = ["features/obj02_001.png", "features/obj02_002.png",...
-    "features/obj02_003.png", "features/obj02_004.png",...
-    "features/obj02_005.png", "features/obj02_006.png",...
-    "features/obj02_007.png", "features/obj02_008.png",...
-    "features/obj02_009.png", "features/obj02_010.png",...
-    "features/obj02_011.png", "features/obj02_012.png",...
-    "features/obj02_013.png", "features/obj02_014.png",...
-    "features/obj02_015.png", "features/obj02_016.png",...
-    "features/obj02_017.png", "features/obj02_018.png",...
-    "features/obj02_019.png", "features/obj02_020.png"];
+x1 = output1(:, 1)';
+y1 = output1(:, 2)';
+a1 = output1(:, 3)';
+b1 = output1(:, 4)';
+c1 = output1(:, 5)';
+desc1 = output1(:, 6:end)';
+
+% Image 2
+output2 = dlmread(desc2, ' ', 2, 0);
+
+x2 = output2(:, 1)';
+y2 = output2(:, 2)';
+a2 = output2(:, 3)';
+b2 = output2(:, 4)';
+c2 = output2(:, 5)';
+desc2 = output2(:, 6:end)';
+
+% Matching
+[matches, scores] = vl_ubcmatch(desc1, desc2, 2.);
+
+% Get n best matches
+n = nMatches;
+best_matches = zeros(3, n);
+
+m = 1;
+while m <= n
+    [best_matches(1,m), idx] = min(scores);
+
+    scores(idx) = +Inf;
+
+    % Nog ingebouwd dat ie alleen naar een bepaalde rectangle kijkt...
+    if (x1(:,matches(1,idx)) > 750) && (x1(:,matches(1,idx)) < 1500) ...
+       && (y1(:,matches(1,idx)) > 550) && (y1(:,matches(1,idx)) < 1100)
+
+        best_matches(2:end,m) = matches(:,idx);
+        m = m + 1;
+    end
+end
+
+% Create matrix A
+A = zeros(nMatches, 9);
+
+for row = 1:size(A, 1)
+    A(row,:) = [x1(:,best_matches(2,row))*x2(:,best_matches(3,row))
+                x1(:,best_matches(2,row))*y2(:,best_matches(3,row))
+                x1(:,best_matches(2,row))
+                y1(:,best_matches(2,row))*x2(:,best_matches(3,row))
+                y1(:,best_matches(2,row))*y2(:,best_matches(3,row))
+                y1(:,best_matches(2,row))
+                x2(:,best_matches(3,row))
+                y2(:,best_matches(3,row))
+                1];
+end
+
+end

@@ -8,6 +8,8 @@ clear; clc
 run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
+threshold = 0.1;
+n_matches = 190;
 
 %% Inputs
 
@@ -32,7 +34,6 @@ features = ["features/obj02_001.png.harhes.sift", "features/obj02_002.png.harhes
 
 %% Match features and use Normalized 8-point algorithm with RANSAC
 
-n_matches = 190;
 new_matches = NaN(3, n_matches, length(features));
 
 for i = 1 : length(features)
@@ -47,7 +48,7 @@ for i = 1 : length(features)
     end
         
     % RANSAC 8-point
-    [F_RANSAC, inliers] = eightpoint(A);
+    [F_RANSAC, inliers] = eightpoint(A, threshold);
     new_matches(:, 1:length(inliers), i)  = matches(:, inliers);
     
 end

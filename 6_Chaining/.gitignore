@@ -1,3 +1,5 @@
-features
-TeddyBearPNG
+features/
+TeddyBearPNG/
 *.m~
+*.mat
+*.asv

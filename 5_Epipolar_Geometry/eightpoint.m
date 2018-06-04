@@ -1,11 +1,11 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Assignment 5: Epipolar Geometry -> 8-point algorithm
+% Assignment 6: Matching -> 8-point algorithm
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [F, F_denorm, Fbest] = eightpoint(A)
+function [f_best, inliers_best] = eightpoint(A, threshold)
 
-[~, ~, Va]    = svd(A); % Singular Value decomposition of A
+[~, ~, Va]      = svd(A); % Singular Value decomposition of A
 f               = Va(:,end); % Last column of V (corresponding to smallest singular value equals f
 F               = reshape(f, 3, 3); % Reshape f to matrix F
 
@@ -39,36 +39,8 @@ T   = [[sqrt(2)/d, 0, -mx * sqrt(2)/d];...
         [0, 0, 1]];
 p_hat_acc = T * p_acc;
 
-% Create new A matrix from normalized coordinates
-Anorm = zeros(length(p_hat), 9);
-for i = 1:length(p_hat)
-    Anorm(i,:) = [p_hat(1,i)*p_hat_acc(1,i),...
-                p_hat(1,i)*p_hat_acc(2,i),...
-                p_hat(1,i),...
-                p_hat(2,i) * p_hat_acc(1,i),...
-                p_hat(2,i) * p_hat_acc(2,i),...
-                p_hat(2,i),...
-                p_hat_acc(1,i),...
-                p_hat_acc(2,i),...
-                1];
-end
-
-% Determine normalized F
-[~, ~, Va_norm] = svd(Anorm);
-f_norm   = Va_norm(:,end);
-F_norm   = reshape(f_norm, 3, 3);
-
-% Force singularity of F
-[Uf_norm, Df_norm, Vf_norm] = svd(F_norm);
-Df_norm(end, end) = 0;
-F_norm  = Uf_norm * Df_norm * Vf_norm.';
-
-% Denormalization of F
-F_denorm = T.' * F_norm * T;
-
 %% RANSAC
-inliersBest = 0;
-threshold = 0.1;
+n_inliers_best = 0;
 N = 1000;
 for n = 1:N
     % Get 8 random pairs
@@ -97,22 +69,23 @@ for n = 1:N
     f_ransac = V;
     F_ransac = reshape(f_ransac, 3, 3);
     
-    % Find inliers
+    % Find inliers for all n points in A
     Fp = F_ransac * p_hat_used;
     Ftp= F_ransac'* p_hat_used;
-    d = zeros(size(p_hat_used, 2), 1);
-    for i = 1:size(p_hat_used, 2)
-        num = p_hat_acc_used(:,i)' * F_ransac * p_hat_used(:,i);
-        den = Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2;
-        d(i,1) = num / den;
-    end
-%     d = (p_hat_acc_used' * F_ransac * p_hat_used)^2 / ...
-%         (Fp(1)^2 + Fp(2)^2 + Ftp(1)^2 + Ftp(2)^2);
-    inliers = length(find(d < threshold));
+    d   = zeros(1, length(Fp));
     
-    if inliers > inliersBest   
-        inliersBest = inliers;
-        Fbest = F_ransac;  
+    for i = 1:length(Fp)
+        d(i) = (p_hat_acc_used(:,i)' * F_ransac * p_hat_used(:,i))^2 / ...
+            (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
+    end
+
+    inliers     = find(d < threshold);
+    n_inliers   = length(inliers);
+    
+    if n_inliers > n_inliers_best   
+        n_inliers_best   = n_inliers;
+        inliers_best     = inliers;
+        f_best           = F_ransac;  
     end
 end
 

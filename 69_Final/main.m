@@ -4,7 +4,19 @@
 
 %% Load data
 
-data_location = 'model_castle';
+image_files = dir('model_castle/*.jpg');
+
+for i = 1:length(image_files)
+    
+    current_image = imread([image_files(i).folder '/' image_files(i).name]);
+    
+    if i == 1
+        images = zeros([size(current_image) length(image_files)]);
+    end
+    
+    images(:, :, :, i) = current_image;
+   
+end
 
 %% Feature point detection & extraction of SIFT descriptors (4 pts)
 

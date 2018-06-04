@@ -5,3 +5,4 @@ features/
 
 # Ignore MATLAB temp files
 *.asv
+*.pdf

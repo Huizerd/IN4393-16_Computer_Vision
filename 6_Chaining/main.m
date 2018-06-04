@@ -5,10 +5,10 @@
 
 clear; clc
 
-run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
-% run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+% run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
+run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
-threshold = 0.1;
+threshold = 0.00001;
 n_matches = 190;
 
 %% Inputs

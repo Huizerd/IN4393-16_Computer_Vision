@@ -65,8 +65,11 @@ end
 
 %% Chaining (8 pts)
 
+point_view_matrix = chaining(matches);
+
 
 %% Stitching (12 pts)
+
 
 
 %% Bundle adjustment (4 pts)

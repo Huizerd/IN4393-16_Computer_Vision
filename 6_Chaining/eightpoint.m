@@ -70,12 +70,12 @@ for n = 1:N
     F_ransac = reshape(f_ransac, 3, 3);
     
     % Find inliers for all n points in A
-    Fp = F_ransac * p_hat_used;
-    Ftp= F_ransac'* p_hat_used;
-    d   = zeros(1, length(Fp));
+    Fp = F_ransac * p_hat;
+    Ftp= F_ransac'* p_hat;
+    d   = zeros(1, length(p_hat));
     
-    for i = 1:length(Fp)
-        d(i) = (p_hat_acc_used(:,i)' * F_ransac * p_hat_used(:,i))^2 / ...
+    for i = 1:length(p_hat)
+        d(i) = (p_hat_acc(:,i)' * F_ransac * p_hat(:,i))^2 / ...
             (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
     end
 

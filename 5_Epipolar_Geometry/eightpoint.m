@@ -98,10 +98,16 @@ for n = 1:N
     F_ransac = reshape(f_ransac, 3, 3);
     
     % Find inliers
-    Fp = F * p_hat;
-    Ftp= F'* p_hat;
-    d = (p_hat_acc' * F_ransac * p_hat)^2 / ...
-        (Fp(1)^2 + Fp(2)^2 + Ftp(1)^2 + Ftp(2)^2);
+    Fp = F_ransac * p_hat_used;
+    Ftp= F_ransac'* p_hat_used;
+    d = zeros(size(p_hat_used, 2), 1);
+    for i = 1:size(p_hat_used, 2)
+        num = p_hat_acc_used(:,i)' * F_ransac * p_hat_used(:,i);
+        den = Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2;
+        d(i,1) = num / den;
+    end
+%     d = (p_hat_acc_used' * F_ransac * p_hat_used)^2 / ...
+%         (Fp(1)^2 + Fp(2)^2 + Ftp(1)^2 + Ftp(2)^2);
     inliers = length(find(d < threshold));
     
     if inliers > inliersBest   

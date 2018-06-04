@@ -3,3 +3,4 @@ model_castle/
 
 # Ignore MATLAB temp files
 *.asv
+*.pdf

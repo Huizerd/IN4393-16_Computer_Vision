@@ -76,7 +76,7 @@ for i = 2:length(images)
     
 
     
-    [F_ransac_denorm, inliers] = eightpoint(x1, y1, x2, y2, best_matches, threshold);
+    [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold);
     
 end
 
@@ -85,8 +85,11 @@ end
 I1=imread('TeddyBearPNG/obj02_001.png');
 I2=imread('TeddyBearPNG/obj02_002.png');
 
-p1 = [x1(matches(1, :)); y1(matches(1, :))]';
-p2 = [x2(matches(2, :)); y2(matches(2, :))]';
+p1 = inliers_1;
+p2 = inliers_2;
+
+% p1 = [x1(matches(1, :)); y1(matches(1, :))]';
+% p2 = [x2(matches(2, :)); y2(matches(2, :))]';
 % F_final = F_ransac;
 F_final = F_ransac_denorm;
 % F_final = [-4.6553926e-08 -4.716306e-07 0.00026527;...

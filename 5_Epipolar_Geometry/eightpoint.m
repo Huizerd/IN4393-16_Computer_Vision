@@ -3,7 +3,7 @@
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [F_ransac_denorm, inliers_best] = eightpoint(x1, y1, x2, y2, best_matches, threshold)
+function [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold)
 
 % % Create matrix A
 % A = zeros(length(best_matches), 9);
@@ -31,8 +31,8 @@ function [F_ransac_denorm, inliers_best] = eightpoint(x1, y1, x2, y2, best_match
 
 %% Normalization
 % For  first image
-xcoords = x1(:,best_matches(2,row));
-ycoords = y1(:,best_matches(2,row));
+xcoords = x1(:,best_matches(2,:))';
+ycoords = y1(:,best_matches(2,:))';
 p       = [xcoords, ycoords, ones(size(xcoords))]';
 mx  = mean(xcoords);
 my  = mean(ycoords);
@@ -43,8 +43,8 @@ T1   = [[sqrt(2)/d, 0, -mx * sqrt(2)/d];...
 p_hat = T1 * p;
 
 % For second image
-xcoords = x2(:,best_matches(3,row));
-ycoords = y2(:,best_matches(3,row));
+xcoords = x2(:,best_matches(3,:))';
+ycoords = y2(:,best_matches(3,:))';
 p_acc   = [xcoords, ycoords, ones(size(xcoords))]';
 mx  = mean(xcoords);
 my  = mean(ycoords);
@@ -110,5 +110,7 @@ for n = 1:N
 end
 
 F_ransac_denorm = T1' * F_best * T1;
+inliers_1 = p(1:2, inliers_best)';
+inliers_2 = p_acc(1:2, inliers_best)';
 
 end

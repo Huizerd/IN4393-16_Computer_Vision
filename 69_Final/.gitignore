@@ -1,5 +1,7 @@
 # Ignore data
 model_castle/
+model_castle_png/
+features/
 
 # Ignore MATLAB temp files
 *.asv

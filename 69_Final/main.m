@@ -4,16 +4,21 @@
 
 clc; clear; close all
 
-if all(getenv('username') == 'jesse')
-    run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
-else
-    run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
-end
+% if all(getenv('username') == 'jesse')
+%     run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+% else
+run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+% end
+
+%% Settings
+match_threshold = 1.3;
+dist_threshold = 0.08;
+n_matches = 200;
 
 %% Load data
 
 % Images
-image_files = dir('model_castle/*.jpg');
+image_files = dir('model_castle/*.JPG');
 
 for i = 1:length(image_files)
     
@@ -49,11 +54,11 @@ end
 % Using VLFeat's SIFT
 sift_vlfeat = {};
 
-for i = 1:size(images, 4)
-    
-    [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
-    
-end
+% for i = 1:size(images, 4) -17
+%     
+%     [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
+%     
+% end
 
 % Save
 save('sift_vlfeat', 'sift_vlfeat')
@@ -73,11 +78,19 @@ vl_plotframe(sift_oxford{1, 1});
 
 
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
-
-
+inliers = {}; 
+for i = 1:length(feature_files) - 18
+    i
+    [F_ransac_denorm, inliers_1, inliers_2] = do_eightpoint(sift_oxford, match_threshold, dist_threshold, n_matches, i);
+    if i == 1
+        plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
+    end
+    inliers{i, 1} = inliers_1;
+    inliers{i, 2} = inliers_2;
+end
 %% Chaining (8 pts)
 
-point_view_matrix = chaining(matches);
+% point_view_matrix = chaining(matches);
 
 
 %% Stitching (12 pts)

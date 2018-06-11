@@ -4,14 +4,11 @@
 
 clc; clear; close all
 
-% if all(getenv('username') == 'jesse')
-%     run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
-% else
-run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
-% end
+run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+% run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
-match_threshold = 1.3;
+match_threshold = 1.6;
 dist_threshold = 0.08;
 n_matches = 200;
 
@@ -48,49 +45,52 @@ for i = 1:length(feature_files)
     sift_oxford{2, i} = current_features(:, 6:end)';
    
 end
+
  
 %% Feature point detection & extraction of SIFT descriptors (4 pts)
 
-% Using VLFeat's SIFT
-sift_vlfeat = {};
+if ~exist('sift_vlfeat.mat')
+  
+    % Using VLFeat's SIFT
+    sift_vlfeat = {};
 
-% for i = 1:size(images, 4) -17
-%     
-%     [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
-%     
-% end
+    for i = 1:size(images, 4)
 
-% Save
-save('sift_vlfeat', 'sift_vlfeat')
+        [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
+
+    end
+    
+    % Save
+    save('sift_vlfeat', 'sift_vlfeat')
+    
+else
+    
+    % Load already detected features
+    load('sift_vlfeat', 'sift_vlfeat')
+    
+end
 
 % Using Harris-affine & Hessian-affine SIFT from
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
 %   --> loaded in above section
 
 
-%% Plot descriptors
-
-% Select 50 random
-% perm = randperm(size(sift_oxford{1, 1}, 2), 5000);
-
-imshow(images_grey(:, :, 1)); hold on
-vl_plotframe(sift_oxford{1, 1});
-
-
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
 inliers = {}; 
 for i = 1:length(feature_files) - 18
-    i
-    [F_ransac_denorm, inliers_1, inliers_2] = do_eightpoint(sift_oxford, match_threshold, dist_threshold, n_matches, i);
+    disp(i)
+    [F_ransac_denorm, inliers_1, inliers_2] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
     if i == 1
         plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
     end
     inliers{i, 1} = inliers_1;
     inliers{i, 2} = inliers_2;
 end
+
+
 %% Chaining (8 pts)
 
-% point_view_matrix = chaining(matches);
+point_view_matrix = chaining(matches);
 
 
 %% Stitching (12 pts)

@@ -3,7 +3,7 @@
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [F_best, inliers_1, inliers_2, inliers_best] = eightpoint(x1, y1, x2, y2, matches, threshold)
+function [F_best, inliers_1, inliers_2, inliers_match_idx] = eightpoint(x1, y1, x2, y2, matches, threshold)
 
 %% Normalization
 % For  first image

@@ -1,4 +1,4 @@
-function point_view_matrix = chaining(matches)
+function point_view_matrix = chaining(matches_cell)
 % CHAINING Constructs the point-view matrix with the matches found between
 %   consecutive frames. This matrix has tracked points as columns, and
 %   views/frames as rows and contains the indices of the descriptor for
@@ -8,14 +8,24 @@ function point_view_matrix = chaining(matches)
 %   non-zero.
 %
 % Inputs:
-% - matches: matrix containing matches, with descriptor indices for the 1st
-%   image in the 1st row, indices for the 2nd image in the 2nd row. The 3rd
-%   dimension is stacked with each frame pair (1-2, 2-3, 3-4, ... , 16-1).
+% - matches_cell: cell array containing matches, with descriptor indices
+%   for the 1st image in the 1st row, indices for the 2nd image in the 2nd
+%   row. Each cell contains one frame pair (1-2, 2-3, 3-4, ... , 16-1).
 %
 % Outputs:
 % - point_view_matrix: matrix containing matches between consecutive frames
 %
 % Jesse Hagenaars - 04.06.2018
+
+% Convert cell array to matrix with NaNs
+N_matches = cellfun('size', matches_cell, 2);
+matches = NaN(2, max(N_matches), size(matches_cell, 2));
+
+for i = 1:size(matches_cell, 2)
+    
+    matches(:, 1:N_matches(i), i) = matches_cell{:, i};
+    
+end
 
 % Frames/views as rows, tracked points as columns
 point_view_matrix = zeros(size(matches, 3), size(matches, 2));

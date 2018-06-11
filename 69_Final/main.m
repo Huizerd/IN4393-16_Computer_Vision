@@ -9,7 +9,7 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
 match_threshold = 1.6;
-dist_threshold = 0.08;
+dist_threshold = 10;
 n_matches = 200;
 
 %% Load data
@@ -49,7 +49,8 @@ end
  
 %% Feature point detection & extraction of SIFT descriptors (4 pts)
 
-if ~exist('sift_vlfeat.mat')
+% Only do if file doesn't exist already
+if ~exist('sift_vlfeat.mat', 'file')
   
     % Using VLFeat's SIFT
     sift_vlfeat = {};
@@ -76,21 +77,40 @@ end
 
 
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
-inliers = {}; 
-for i = 1:length(feature_files) - 18
-    disp(i)
-    [F_ransac_denorm, inliers_1, inliers_2, inliers_best] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
-    if i == 1
-        plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
-    end
-    inliers{i, 1} = inliers_1;
-    inliers{i, 2} = inliers_2;
-end
 
+% Only do if file doesn't exist already
+if ~exist('matches_8pt_RANSAC.mat', 'file')
+    
+    % Cell array of matches per frame pair
+    matches_8pt_RANSAC = {};
+
+    for i = 1:size(sift_vlfeat, 2)  
+
+        disp(i)
+
+        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
+
+        matches_8pt_RANSAC{1, i} = inliers_idx;
+
+        if i == 1
+
+            plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
+
+        end
+
+    end
+
+    save('matches_8pt_RANSAC', 'matches_8pt_RANSAC')
+    
+else
+    
+    load('matches_8pt_RANSAC', 'matches_8pt_RANSAC')
+    
+end
 
 %% Chaining (8 pts)
 
-point_view_matrix = chaining(matches);
+point_view_matrix = chaining(matches_8pt_RANSAC);
 
 
 %% Stitching (12 pts)
@@ -101,11 +121,12 @@ S = {};
 % Use 4 consecutive frames each time
 for f = 0:size(point_view_matrix, 1) - 1
     
-    % Shift array circularly
+    % Shift (cell) array circularly
     pv_matrix_circ = circshift(point_view_matrix, -f, 1);
+    sift_vlfeat_circ = circshift(sift_vlfeat, -f, 2);
     
     % Get x, y for each SIFT descriptor
-    points = get_points(sift_vlfeat, pv_matrix_circ(1:4, :));
+    points = get_points(sift_vlfeat_circ, pv_matrix_circ(1:3, :));
     
     % Perform structure-from-motion and solve for affine ambiguity
     S{1, f+1} = SfM(points);

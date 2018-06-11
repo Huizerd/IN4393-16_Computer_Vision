@@ -1,15 +1,31 @@
 function [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, n_matches, i)
-% Get coords and descriptors
-x1 = sift{1,i}(1,:);
-y1 = sift{1,i}(2,:);
-desc1 = sift{2,i}(:,:);
 
-x2 = sift{1,i+1}(1,:);
-y2 = sift{1,i+1}(2,:);
-desc2 = sift{2,i+1}(:,:);
+if i < size(sift, 2)
+    
+    % Get coords and descriptors
+    x1 = sift{1,i}(1,:);
+    y1 = sift{1,i}(2,:);
+    desc1 = sift{2,i}(:,:);
+
+    x2 = sift{1,i+1}(1,:);
+    y2 = sift{1,i+1}(2,:);
+    desc2 = sift{2,i+1}(:,:);
+    
+else
+    
+    % Last pair: last & 1st image
+    x1 = sift{1,i}(1,:);
+    y1 = sift{1,i}(2,:);
+    desc1 = sift{2,i}(:,:);
+
+    x2 = sift{1,1}(1,:);
+    y2 = sift{1,1}(2,:);
+    desc2 = sift{2,1}(:,:);
+    
+end
 
 % Get matches
-[matches, scores] = vl_ubcmatch(desc1, desc2, match_threshold);
+[matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
 
 % % Get n best matches
 % n = n_matches;

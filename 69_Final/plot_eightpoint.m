@@ -1,13 +1,15 @@
 function [] = plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm)
 % plotting, plot the F_ransac
-I1=uint8(imread('model_castle/8ADT8586.JPG'));
-I2=uint8(imread('model_castle/8ADT8587.JPG'));
+I1=(imread('model_castle/8ADT8586.JPG'));
+I2=(imread('model_castle/8ADT8587.JPG'));
 
-p1 = inliers_1;
-p2 = inliers_2;
+p1 = inliers_1';
+p2 = inliers_2';
 
-imtot = cat(2, I1, I2);
-imshow(imtot);
+p2(1, :) = p2(1, :) + 4064;
+
+imshow([I1 I2]);
+hold on
 
 % F_final = F_ransac_denorm;
 % 
@@ -26,19 +28,19 @@ imshow(imtot);
 % % title('Epipolar lines in second image RANSAC'); hold on; 
 % % plot(p2(:,1),p2(:,2),'go');
 % 
-h1 = vl_plotframe(p1');
-h2 = vl_plotframe(p1');
+h1 = vl_plotframe(p1);
+h2 = vl_plotframe(p1);
 set(h1,'color','k','linewidth',3);
 set(h2,'color','y','linewidth',2);
 
-h1 = vl_plotframe(p2');
-h2 = vl_plotframe(p2');
+h1 = vl_plotframe(p2);
+h2 = vl_plotframe(p2);
 set(h1,'color','k','linewidth',3);
 set(h2,'color','y','linewidth',2);
 hold on;
-for idx = 1:numel(p1(:,1))
-    X_lines = [p1(idx, 1),p1(idx, 1)];
-    Y_lines = [p2(idx, 2),p2(idx, 2)];
+for idx = 1:numel(p1(1, :))
+    X_lines = [p1(1, idx),p2(1, idx)];
+    Y_lines = [p1(2, idx),p2(2, idx)];
     plot(X_lines,Y_lines)
 end
 

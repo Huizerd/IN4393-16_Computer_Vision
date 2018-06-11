@@ -76,7 +76,7 @@ for i = 2:length(images)
     
 
     
-    [F_ransac, F_ransac_denorm, inliers] = eightpoint(x1, y1, x2, y2, best_matches, threshold);
+    [F_ransac_denorm, inliers] = eightpoint(x1, y1, x2, y2, best_matches, threshold);
     
 end
 

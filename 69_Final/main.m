@@ -1,11 +1,11 @@
 % IN4393-16: Final Assignment
 % 
-% Jesse Hagenaars & Michael Mollema - 04.06.2018
+% Jesse Hagenaars & Michiel Mollema - 04.06.2018
 
 clc; clear; close all
 
-run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
-% run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+% run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
 match_threshold = 1.6;

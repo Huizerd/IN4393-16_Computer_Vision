@@ -55,9 +55,21 @@ for i = 1:size(images, 4)
     
 end
 
+% Save
+save('sift_vlfeat', 'sift_vlfeat')
+
 % Using Harris-affine & Hessian-affine SIFT from
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
 %   --> loaded in above section
+
+
+%% Plot descriptors
+
+% Select 50 random
+% perm = randperm(size(sift_oxford{1, 1}, 2), 5000);
+
+imshow(images_grey(:, :, 1)); hold on
+vl_plotframe(sift_oxford{1, 1});
 
 
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
@@ -70,12 +82,51 @@ point_view_matrix = chaining(matches);
 
 %% Stitching (12 pts)
 
+% Cells to store 3D point set for each set of frames
+S = {};
+
+% Use 4 consecutive frames each time
+for f = 0:size(point_view_matrix, 1) - 1
+    
+    % Shift array circularly
+    pv_matrix_circ = circshift(point_view_matrix, -f, 1);
+    
+    % Get x, y for each SIFT descriptor
+    points = get_points(sift_vlfeat, pv_matrix_circ(1:4, :));
+    
+    % Perform structure-from-motion and solve for affine ambiguity
+    S{1, f+1} = SfM(points);
+    
+end
+
+% Extend this with transformation
+S_final = S{1, 1};
+
+% Stitch various 3D point sets together
+for s = 0:size(S, 2) - 1
+    
+    % Shift cell array circularly
+    S_circ = circshift(S, s, 2);
+    
+    % Get transformation between 3D point sets
+    [d, Z] = procrustes(S_circ{1, 1}, S_circ{1, 2});
+    
+    % Extend final 3D point set --> check dimensions
+    S_final = [S_final; Z];
+    
+end
+
+% Check for close points in some way?
 
 
 %% Bundle adjustment (4 pts)
 
 
+
+
 %% Eliminate affine ambiguity (4 pts)
+
+% Already in SfM?
 
 
 %% 3D model plotting (4 pts)

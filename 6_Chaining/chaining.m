@@ -21,8 +21,6 @@ point_view_matrix(:, ~any(point_view_matrix, 1)) = [];
 
 for i = 2:size(matches, 3) - 1
     
-    disp(i)
-    
     % Set intersection of indices in 1st frame of pair i and 2nd frame of
     % pair i - 1
     [~, ia, ib] = intersect(matches(2, :, i), point_view_matrix(i, :));

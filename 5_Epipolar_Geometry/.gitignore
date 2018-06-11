@@ -8,3 +8,8 @@ extract_features/
 
 # Ignore extracted features
 *.png.harhes.sift
+
+# Davids code
+ass_5.m
+
+*.m~

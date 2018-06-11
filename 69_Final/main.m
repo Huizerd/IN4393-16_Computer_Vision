@@ -79,7 +79,7 @@ end
 inliers = {}; 
 for i = 1:length(feature_files) - 18
     disp(i)
-    [F_ransac_denorm, inliers_1, inliers_2] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
+    [F_ransac_denorm, inliers_1, inliers_2, inliers_best] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
     if i == 1
         plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
     end

@@ -29,7 +29,7 @@ for i = 2:size(matches, 3) - 1
     point_view_matrix(i + 1, ib) = matches(3, ia, i);
     
     % Add new matches
-    new = matches(2:3, :);  % copy matches
+    new = matches(2:3, :, i);  % copy matches
     new(:, ia) = [];  % delete already matched rows, so only new left
     new(:, ~any(new, 1)) = [];  % delete NaNs
     add = zeros(size(point_view_matrix, 1), size(new, 2));

@@ -9,7 +9,7 @@ function point_view_matrix = chaining(matches)
 %
 % Inputs:
 % - matches: matrix containing matches, with descriptor indices for the 1st
-%   image in the 2nd row, indices for the 2nd image in the 3rd row. The 3rd
+%   image in the 1st row, indices for the 2nd image in the 2nd row. The 3rd
 %   dimension is stacked with each frame pair (1-2, 2-3, 3-4, ... , 16-1).
 %
 % Outputs:
@@ -21,7 +21,7 @@ function point_view_matrix = chaining(matches)
 point_view_matrix = zeros(size(matches, 3), size(matches, 2));
 
 % Different approach for 1st pair (1-2)
-point_view_matrix(1:2, 1:size(matches, 2)) = matches(2:3, :, 1);
+point_view_matrix(1:2, 1:size(matches, 2)) = matches(:, :, 1);
 
 % Trim NaN/zero rows
 point_view_matrix(:, ~any(point_view_matrix, 1)) = [];
@@ -30,13 +30,13 @@ for i = 2:size(matches, 3) - 1
     
     % Set intersection of indices in 1st frame of pair i and 2nd frame of
     % pair i - 1
-    [~, ia, ib] = intersect(matches(2, :, i), point_view_matrix(i, :));
+    [~, ia, ib] = intersect(matches(1, :, i), point_view_matrix(i, :));
     
     % Write points of 2nd frame of pair i to row i + 1
-    point_view_matrix(i + 1, ib) = matches(3, ia, i);
+    point_view_matrix(i + 1, ib) = matches(2, ia, i);
     
     % Add new matches
-    new = matches(2:3, :);  % copy matches
+    new = matches(:, :, i);  % copy matches
     new(:, ia) = [];  % delete already matched rows, so only new left
     new(:, ~any(new, 1)) = [];  % delete NaNs
     add = zeros(size(point_view_matrix, 1), size(new, 2));
@@ -44,8 +44,8 @@ for i = 2:size(matches, 3) - 1
     point_view_matrix = [point_view_matrix add]; 
     
 % Different approach for last pair (16-1)
-[~, ia, ~] = intersect(matches(2, :, 16), point_view_matrix(end, :));  % intersection between frame 16 of pair 16-1 and frame 16 of pair 15-16
-[~, ia2, ib2] = intersect(matches(3, ia, 16), point_view_matrix(1, :));  % of those matches, select those that also have an intersection between frame 1 of pair 16-1 and frame 1 of pair 1-2, in order to add them to the correct column
-point_view_matrix(15:16, ib2) = matches(2:3, ia2, 16);
+[~, ia, ~] = intersect(matches(1, :, 16), point_view_matrix(end, :));  % intersection between frame 16 of pair 16-1 and frame 16 of pair 15-16
+[~, ia2, ib2] = intersect(matches(2, ia, 16), point_view_matrix(1, :));  % of those matches, select those that also have an intersection between frame 1 of pair 16-1 and frame 1 of pair 1-2, in order to add them to the correct column
+point_view_matrix(15:16, ib2) = matches(:, ia2, 16);
    
 end

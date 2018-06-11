@@ -1,4 +1,4 @@
-function [F_ransac_denorm, inliers_1, inliers_2] = do_eightpoint(sift, match_threshold, dist_threshold, n_matches, i)
+function [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, n_matches, i)
 % Get coords and descriptors
 x1 = sift{1,i}(1,:);
 y1 = sift{1,i}(2,:);
@@ -48,4 +48,4 @@ end
 % end
 
 
-[F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, new_matches, dist_threshold);
+[F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = eightpoint(x1, y1, x2, y2, new_matches, dist_threshold);

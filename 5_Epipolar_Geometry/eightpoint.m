@@ -3,7 +3,7 @@
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold)
+function [F_best, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold)
 
 % % Create matrix A
 % A = zeros(length(best_matches), 9);
@@ -31,8 +31,8 @@ function [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, be
 
 %% Normalization
 % For  first image
-xcoords = x1(:,best_matches(2,:))';
-ycoords = y1(:,best_matches(2,:))';
+xcoords = x1(:,best_matches(1,:))';
+ycoords = y1(:,best_matches(1,:))';
 p       = [xcoords, ycoords, ones(size(xcoords))]';
 mx  = mean(xcoords);
 my  = mean(ycoords);
@@ -43,8 +43,8 @@ T1   = [[sqrt(2)/d, 0, -mx * sqrt(2)/d];...
 p_hat = T1 * p;
 
 % For second image
-xcoords = x2(:,best_matches(3,:))';
-ycoords = y2(:,best_matches(3,:))';
+xcoords = x2(:,best_matches(2,:))';
+ycoords = y2(:,best_matches(2,:))';
 p_acc   = [xcoords, ycoords, ones(size(xcoords))]';
 mx  = mean(xcoords);
 my  = mean(ycoords);
@@ -62,7 +62,7 @@ for n = 1:N
     perm = randperm(length(xcoords));
     P    = 8;
     seed = perm(1:P);
-    p_hat_used = p_hat (:, seed);
+    p_hat_used = p_hat(:, seed);
     p_hat_acc_used = p_hat_acc(:,seed);
     
     % Create new A matrix from normalized coordinates
@@ -88,15 +88,17 @@ for n = 1:N
     [Uf, Df, Vf] = svd(F_ransac);
     Df(end, end) = 0;
     F_ransac     = Uf * Df * Vf';
+    F_ransac_denorm = T1' * F_ransac * T1;
     
     % Find inliers for all n points in A
-    Fp = F_ransac * p_hat;
-    Ftp= F_ransac'* p_hat;
-    d  = zeros(1, length(p_hat));
+    Fp = F_ransac_denorm * p;
+    Ftp= F_ransac_denorm'* p;
+    d  = zeros(1, length(p));
     
-    for i = 1:length(p_hat)
-        d(i) = (p_hat_acc(:,i)' * F_ransac * p_hat(:,i))^2 / ...
-            (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
+    for i = 1:length(p)
+        num = (p_acc(:,i)' * F_ransac_denorm * p(:,i))^2;
+        den = (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
+        d(i) = num / den;
     end
 
     inliers     = find(d < threshold);
@@ -105,12 +107,19 @@ for n = 1:N
     if n_inliers > n_inliers_best   
         n_inliers_best   = n_inliers;
         inliers_best     = inliers;
-        F_best           = F_ransac;
+        F_best           = F_ransac_denorm;
     end
 end
 
-F_ransac_denorm = T1' * F_best * T1;
-inliers_1 = p(1:2, inliers_best)';
-inliers_2 = p_acc(1:2, inliers_best)';
+inliers_match_idx = best_matches(:, inliers_best);
+inliers_1 = [x1(inliers_match_idx(1,:)); y1(inliers_match_idx(1,:))]';
+inliers_2 = [x2(inliers_match_idx(2,:)); y2(inliers_match_idx(2,:))]';
+
+% inliers_1 = p(:, inliers_best);
+% inliers_2 = F_best' * inliers_1;
+% inliers_1 = inliers_1(1:2, :)';
+% inliers_2 = inliers_2(1:2, :)';
+% inliers_1 = p(1:2, inliers_best)';
+% inliers_2 = p_acc(1:2, inliers_best)';
 
 end

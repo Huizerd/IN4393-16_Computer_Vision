@@ -2,7 +2,8 @@
 % Jesse Hagenaars & Michiel Mollema - 07-05-2018
 
 clear; clc
-threshold = 1e-5;
+threshold = 10;
+match_treshold = 5;
 
 % run('C:\Users\jesse\Documents\MATLAB\vlfeat\toolbox\vl_setup')
 run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
@@ -45,25 +46,34 @@ for i = 2:length(images)
 %     imshow(im1_gradienty)
     
     % Matching
-    [matches, scores] = vl_ubcmatch(desc1, desc2, 5.);
+    [matches, scores] = vl_ubcmatch(desc1, desc2, match_treshold);
     
     % Get n best matches
-    n = 200;
-    best_matches = zeros(3, n);
-    
-    m = 1;
-    while m <= n
-        [best_matches(1,m), idx] = min(scores);
-        
-        scores(idx) = +Inf;
-        
-        if (x1(:,matches(1,idx)) > 750) && (x1(:,matches(1,idx)) < 1500) ...
-           && (y1(:,matches(1,idx)) > 550) && (y1(:,matches(1,idx)) < 1100)
-       
-            best_matches(2:end,m) = matches(:,idx);
-            m = m + 1;
-        end
+    new_matches = [];
+    for m = 1:size(matches, 2)    
+        if (x1(:,matches(1,m)) > 750) && (x1(:,matches(1,m)) < 1500) ...
+                && (y1(:,matches(1,m)) > 550) && (y1(:,matches(1,m)) < 1100)
+
+            new_matches = [new_matches matches(:, m)];
+
+        end    
     end
+%     n = 200;
+%     best_matches = zeros(3, n);
+%     
+%     m = 1;
+%     while m <= n
+%         [best_matches(1,m), idx] = min(scores);
+%         
+%         scores(idx) = +Inf;
+%         
+%         if (x1(:,matches(1,idx)) > 750) && (x1(:,matches(1,idx)) < 1500) ...
+%            && (y1(:,matches(1,idx)) > 550) && (y1(:,matches(1,idx)) < 1100)
+%        
+%             best_matches(2:end,m) = matches(:,idx);
+%             m = m + 1;
+%         end
+%     end
     
 % %     Plot    
 %     imtot = cat(2, im1,im2);
@@ -76,7 +86,7 @@ for i = 2:length(images)
     
 
     
-    [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold);
+    [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, new_matches, threshold);
     
 end
 

@@ -3,31 +3,7 @@
 % Jesse Hagenaars & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [F_ransac_denorm, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, matches, threshold)
-
-% % Create matrix A
-% A = zeros(length(best_matches), 9);
-% 
-% for row = 1:size(A, 1)
-%     A(row,:) = [x1(:,best_matches(2,row))*x2(:,best_matches(3,row))
-%                 x1(:,best_matches(2,row))*y2(:,best_matches(3,row))
-%                 x1(:,best_matches(2,row))
-%                 y1(:,best_matches(2,row))*x2(:,best_matches(3,row))
-%                 y1(:,best_matches(2,row))*y2(:,best_matches(3,row))
-%                 y1(:,best_matches(2,row))
-%                 x2(:,best_matches(3,row))
-%                 y2(:,best_matches(3,row))
-%                 1];
-% end
-% 
-% [~, ~, Va]      = svd(A); % Singular Value decomposition of A
-% f               = Va(:,end); % Last column of V (corresponding to smallest singular value equals f
-% F               = reshape(f, 3, 3); % Reshape f to matrix F
-% 
-% % Enforce singularity of fundamental matrix F
-% [Uf, Df, Vf]    = svd(F);
-% Df(end, end)    = 0;
-% F               = Uf * Df * Vf';
+function [F_best, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, matches, threshold)
 
 %% Normalization
 % For  first image
@@ -88,14 +64,15 @@ for n = 1:N
     [Uf, Df, Vf] = svd(F_ransac);
     Df(end, end) = 0;
     F_ransac     = Uf * Df * Vf';
+    F_ransac_denorm = T1' * F_ransac * T1;
     
     % Find inliers for all n points in A
-    Fp = F_ransac * p_hat;
-    Ftp= F_ransac'* p_hat;
-    d  = zeros(1, length(p_hat));
+    Fp = F_ransac_denorm * p;
+    Ftp= F_ransac_denorm'* p;
+    d  = zeros(1, length(p));
     
-    for i = 1:length(p_hat)
-        d(i) = (p_hat_acc(:,i)' * F_ransac * p_hat(:,i))^2 / ...
+    for i = 1:length(p)
+        d(i) = (p_acc(:,i)' * F_ransac_denorm * p(:,i))^2 / ...
             (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
     end
 
@@ -105,12 +82,12 @@ for n = 1:N
     if n_inliers > n_inliers_best   
         n_inliers_best   = n_inliers;
         inliers_best     = inliers;
-        F_best           = F_ransac;
+        F_best           = F_ransac_denorm;
     end
 end
 
-F_ransac_denorm = T1' * F_best * T1;
-inliers_1 = p(1:2, inliers_best)';
-inliers_2 = p_acc(1:2, inliers_best)';
+inliers_match_idx = matches(:, inliers_best);
+inliers_1 = [x1(inliers_match_idx(1,:)); y1(inliers_match_idx(1,:))]';
+inliers_2 = [x2(inliers_match_idx(2,:)); y2(inliers_match_idx(2,:))]';
 
 end

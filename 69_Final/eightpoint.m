@@ -1,9 +1,25 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Assignment 6: Matching -> 8-point algorithm
-% Jesse Hagenaars & Michiel Mollema - 28-05-2018
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-function [F_best, inliers_1, inliers_2, inliers_best] = eightpoint(x1, y1, x2, y2, matches, threshold)
+function [F_best, inliers_1, inliers_2, inliers_match_idx] = eightpoint(x1, y1, x2, y2, matches, threshold)
+% EIGHTPOINT Determines the fundamental matrix F with the highest number of
+% inliers using the 8-point algorithm and RANSAC. Also returns the indices
+% and coordinates of the inliers for both images.
+% 
+% Inputs:
+% - x1: vector containing all x-coordinates of SIFT features in first image
+% - y1: vector containing all y-coordinates of SIFT features in first image
+% - x2: vector containing all x-coordinates of SIFT features in second image
+% - y2: vector containing all y-coordinates of SIFT features in second image
+% - matches: array containing indices of matches SIFT features between both
+%   images
+% - threshold: threshold value for Sampson-distance (used to determine
+%   inliers)
+% 
+% Outputs:
+% - F_best: Fundamental matrix with highest number of inliers
+% - inliers_1: coordinates of inliers for first image
+% - inliers_2: coordinates of inliers for second image
+% - inliers_match_idx: indices of inliers for use with initial match array
+% 
+% Jesse Hagenaars & Michiel Mollema - 11.06.2018
 
 %% Normalization
 % For  first image
@@ -55,18 +71,20 @@ for n = 1:N
                 1];
     end
     
-%     % Determine fundamental matrix F
-    [~, ~, Vransac]        = svd(Aransac); % Singular Value decomposition of A
-    f_ransac               = Vransac(:,end); % Last column of V (corresponding to smallest singular value equals f
-    F_ransac               = reshape(f_ransac, 3, 3); % Reshape f to matrix F
+    % Determine fundamental matrix F
+    [~, ~, Vransac] = svd(Aransac); % Singular Value decomposition of A
+    f_ransac        = Vransac(:,end); % Last column of V (corresponding to smallest singular value equals f
+    F_ransac        = reshape(f_ransac, 3, 3); % Reshape f to matrix F
     
     % Force singularity in F
     [Uf, Df, Vf] = svd(F_ransac);
     Df(end, end) = 0;
     F_ransac     = Uf * Df * Vf';
+    
+    % Denormalize fundamental matrix
     F_ransac_denorm = T1' * F_ransac * T1;
     
-    % Find inliers for all n points in A
+    % Find inliers for all points p
     Fp = F_ransac_denorm * p;
     Ftp= F_ransac_denorm'* p;
     d  = zeros(1, length(p));
@@ -79,6 +97,7 @@ for n = 1:N
     inliers     = find(d < threshold);
     n_inliers   = length(inliers);
     
+    % Store best results
     if n_inliers > n_inliers_best   
         n_inliers_best   = n_inliers;
         inliers_best     = inliers;
@@ -86,6 +105,7 @@ for n = 1:N
     end
 end
 
+% Convert inliers indices to coordinates for first and second image
 inliers_match_idx = matches(:, inliers_best);
 inliers_1 = [x1(inliers_match_idx(1,:)); y1(inliers_match_idx(1,:))]';
 inliers_2 = [x2(inliers_match_idx(2,:)); y2(inliers_match_idx(2,:))]';

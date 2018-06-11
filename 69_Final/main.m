@@ -4,8 +4,8 @@
 
 clc; clear; close all
 
-% run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
-run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+% run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
 match_threshold = 1.6;
@@ -126,10 +126,14 @@ for f = 0:size(point_view_matrix, 1) - 1
     sift_vlfeat_circ = circshift(sift_vlfeat, -f, 2);
     
     % Get x, y for each SIFT descriptor
-    points = get_points(sift_vlfeat_circ, pv_matrix_circ(1:3, :));
+    points = get_points(sift_vlfeat_circ, pv_matrix_circ(1:4, :));
     
-    % Perform structure-from-motion and solve for affine ambiguity
-    S{1, f+1} = SfM(points);
+    if size(points, 2) > 2
+    
+        % Perform structure-from-motion and solve for affine ambiguity
+        S{1, f+1} = SfM(points);
+        
+    end
     
 end
 
@@ -142,11 +146,18 @@ for s = 0:size(S, 2) - 1
     % Shift cell array circularly
     S_circ = circshift(S, s, 2);
     
-    % Get transformation between 3D point sets
-    [d, Z] = procrustes(S_circ{1, 1}, S_circ{1, 2});
+    % Minimum number of rows (equal rows needed for procrustes
+    min_rows = min(cellfun('size', S_circ(1, 1:2), 2));
     
-    % Extend final 3D point set --> check dimensions
-    S_final = [S_final; Z];
+    if min_rows > 0
+        
+        % Get transformation between 3D point sets
+        [d, Z] = procrustes(S_circ{1, 1}(:, 1:min_rows)', S_circ{1, 2}(:, 1:min_rows)');
+
+        % Extend final 3D point set --> check dimensions
+        S_final = [S_final Z'];
+        
+    end
     
 end
 
@@ -164,3 +175,5 @@ end
 
 
 %% 3D model plotting (4 pts)
+
+plot3(S_final(1, :), S_final(2, :), S_final(3, :), 'b.')

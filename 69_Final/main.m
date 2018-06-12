@@ -8,9 +8,9 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
-match_threshold = 1.6;
+match_threshold = 1.25;
 dist_threshold = 10;
-n_matches = 200;
+
 
 %% Load data
 
@@ -88,7 +88,7 @@ if ~exist('matches_8pt_RANSAC.mat', 'file')
 
         disp(i)
 
-        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, n_matches, i);
+        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, i);
 
         matches_8pt_RANSAC{1, i} = inliers_idx;
 

@@ -15,8 +15,32 @@ function [] = plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm)
 I1=(imread('model_castle/8ADT8586.JPG'));
 I2=(imread('model_castle/8ADT8587.JPG'));
 
-p1 = inliers_1';
-p2 = inliers_2';
+p1 = inliers_1;
+p2 = inliers_2;
+
+%% Plotting of matching features
+figure;
+p3 = p2;
+p3(:, 1) = p2(:, 1) + 4064;
+
+imshow([I1 I2]);
+hold on
+h1 = vl_plotframe(p1');
+h2 = vl_plotframe(p1');
+set(h1,'color','k','linewidth',3);
+set(h2,'color','y','linewidth',2);
+
+h1 = vl_plotframe(p3');
+h2 = vl_plotframe(p3');
+set(h1,'color','k','linewidth',3);
+set(h2,'color','y','linewidth',2);
+hold on;
+
+for idx = 1:numel(p1(:, 1))
+    X_lines = [p1(idx, 1), p3(idx, 1)];
+    Y_lines = [p1(idx, 2), p3(idx, 2)];
+    plot(X_lines,Y_lines)
+end
 
 %% Plotting of epipolar lines
 figure;
@@ -38,26 +62,5 @@ lines2 = epipolarLine(F_ransac_denorm, p1);
 epipoint2 = lineToBorderPoints(lines2, size(I2));
 line(epipoint2(:, [1,3])', epipoint2(:, [2,4])');
 truesize;
-
-%% Plotting of matching features
-p2(1, :) = p2(1, :) + 4064;
-
-imshow([I1 I2]);
-hold on
-h1 = vl_plotframe(p1);
-h2 = vl_plotframe(p1);
-set(h1,'color','k','linewidth',3);
-set(h2,'color','y','linewidth',2);
-
-h1 = vl_plotframe(p2);
-h2 = vl_plotframe(p2);
-set(h1,'color','k','linewidth',3);
-set(h2,'color','y','linewidth',2);
-hold on;
-for idx = 1:numel(p1(1, :))
-    X_lines = [p1(1, idx),p2(1, idx)];
-    Y_lines = [p1(2, idx),p2(2, idx)];
-    plot(X_lines,Y_lines)
-end
 
 end

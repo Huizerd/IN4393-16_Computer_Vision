@@ -89,7 +89,7 @@ for n = 1:N
     F_ransac     = Uf * Df * Vf';
     
     % Denormalize fundamental matrix
-    F_ransac_denorm = T1' * F_ransac * T1;
+    F_ransac_denorm = T2' * F_ransac * T1;
     
     % Find inliers for all points p
     Fp = F_ransac_denorm * p;

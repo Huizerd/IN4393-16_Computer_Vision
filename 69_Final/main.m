@@ -34,12 +34,18 @@ images_grey = uint8(mean(images, 3));
 
 % SIFT features, obtained using Harris-affine & Hessian-affine SIFT from
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
-feature_files = dir('features/*.png.harhes.sift');
+feature_files = dir('features/concat_200_10/*.png.harhes.sift');
+% harris_files = dir('features/*.harlap.sift');
+% hess_files = dir('features/*heslap.sift');
 sift_oxford = {};
 
 for i = 1:length(feature_files)
+% for i = 1:length(harris_files)
     
     current_features = dlmread([feature_files(i).folder '/' feature_files(i).name], ' ', 2, 0);
+%     harris_features = dlmread([harris_files(i).folder '/' harris_files(i).name], ' ', 2, 0);
+%     hess_features = dlmread([hess_files(i).folder '/' hess_files(i).name], ' ', 2, 0);
+%     current_features = cat(1, harris_features, hess_features);
     
     sift_oxford{1, i} = current_features(:, 1:5)';
     sift_oxford{2, i} = current_features(:, 6:end)';
@@ -50,26 +56,26 @@ end
 %% Feature point detection & extraction of SIFT descriptors (4 pts)
 
 % Only do if file doesn't exist already
-if ~exist('sift_vlfeat.mat', 'file')
-  
-    % Using VLFeat's SIFT
-    sift_vlfeat = {};
-
-    for i = 1:size(images, 4)
-
-        [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
-
-    end
-    
-    % Save
-    save('sift_vlfeat', 'sift_vlfeat')
-    
-else
-    
-    % Load already detected features
-    load('sift_vlfeat', 'sift_vlfeat')
-    
-end
+% if ~exist('sift_vlfeat.mat', 'file')
+%   
+%     % Using VLFeat's SIFT
+%     sift_vlfeat = {};
+% 
+%     for i = 1:size(images, 4)
+% 
+%         [sift_vlfeat{1, i}, sift_vlfeat{2, i}] = vl_sift(single(images_grey(:, :, i)));
+% 
+%     end
+%     
+%     % Save
+%     save('sift_vlfeat', 'sift_vlfeat')
+%     
+% else
+%     
+%     % Load already detected features
+%     load('sift_vlfeat', 'sift_vlfeat')
+%     
+% end
 
 % Using Harris-affine & Hessian-affine SIFT from
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
@@ -84,23 +90,25 @@ if ~exist('matches_8pt_RANSAC.mat', 'file')
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
 
-    for i = 1:size(sift_vlfeat, 2)-18
+    for i = 1:size(sift_oxford, 2)
 
         disp(i)
 
-        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift_vlfeat, match_threshold, dist_threshold, i);
+        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift_oxford, match_threshold, dist_threshold, i);
 
         matches_8pt_RANSAC{1, i} = inliers_idx;
 
-        if i == 1
-
-            plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm);
+        if i == 15
+            
+            img1 = images(:,:,:,i);
+            img2 = images(:,:,:,i+1);
+            plot_eightpoint(img1, img2, inliers_1, inliers_2, F_ransac_denorm);
 
         end
 
     end
 
-    save('matches_8pt_RANSAC', 'matches_8pt_RANSAC')
+%     save('matches_8pt_RANSAC', 'matches_8pt_RANSAC')
     
 else
     

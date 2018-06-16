@@ -1,4 +1,4 @@
-function [] = plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm)
+function [] = plot_eightpoint(img1, img2, inliers_1, inliers_2, F_ransac_denorm)
 % PLOT_EIGHTPOINT Plots either the matches and epipolar lines for two
 % images (only first pair for checking) or the matches and corresponding 
 % lines between matches.
@@ -12,8 +12,10 @@ function [] = plot_eightpoint(inliers_1, inliers_2, F_ransac_denorm)
 % Outputs: None (shows figures)
 
 %% Load images and coordinates
-I1=(imread('model_castle/8ADT8586.JPG'));
-I2=(imread('model_castle/8ADT8587.JPG'));
+% I1=(imread('model_castle/8ADT8586.JPG'));
+% I2=(imread('model_castle/8ADT8587.JPG'));
+I1 = img1;
+I2 = img2;
 
 p1 = inliers_1;
 p2 = inliers_2;
@@ -36,31 +38,36 @@ set(h1,'color','k','linewidth',3);
 set(h2,'color','y','linewidth',2);
 hold on;
 
-for idx = 1:numel(p1(:, 1))
+perm = randperm(length(p1));
+P    = 20;
+seed = perm(1:P);
+
+% for idx = 1:numel(p1(seed, 1))
+for idx = seed
     X_lines = [p1(idx, 1), p3(idx, 1)];
     Y_lines = [p1(idx, 2), p3(idx, 2)];
     plot(X_lines,Y_lines)
 end
 
 %% Plotting of epipolar lines
-figure;
-subplot(121)
-imshow(I1)
-title('Inliers and Epipolar Lines in First Image RANSAC'); hold on;
-plot(p1(:, 1), p1(:, 2), 'go');
-
-lines1 = epipolarLine(F_ransac_denorm', p2); %Ax+By+C
-epipoint1 = lineToBorderPoints(lines1, size(I1));
-line(epipoint1(:, [1, 3])', epipoint1(:, [2, 4])');
-
-subplot(122); 
-imshow(I2)
-title('Epipolar lines in second image RANSAC'); hold on; 
-plot(p2(:, 1), p2(:, 2), 'go');
-
-lines2 = epipolarLine(F_ransac_denorm, p1);
-epipoint2 = lineToBorderPoints(lines2, size(I2));
-line(epipoint2(:, [1,3])', epipoint2(:, [2,4])');
-truesize;
+% figure;
+% subplot(121)
+% imshow(I1)
+% title('Inliers and Epipolar Lines in First Image RANSAC'); hold on;
+% plot(p1(:, 1), p1(:, 2), 'go');
+% 
+% lines1 = epipolarLine(F_ransac_denorm', p2); %Ax+By+C
+% epipoint1 = lineToBorderPoints(lines1, size(I1));
+% line(epipoint1(:, [1, 3])', epipoint1(:, [2, 4])');
+% 
+% subplot(122); 
+% imshow(I2)
+% title('Epipolar lines in second image RANSAC'); hold on; 
+% plot(p2(:, 1), p2(:, 2), 'go');
+% 
+% lines2 = epipolarLine(F_ransac_denorm, p1);
+% epipoint2 = lineToBorderPoints(lines2, size(I2));
+% line(epipoint2(:, [1,3])', epipoint2(:, [2,4])');
+% truesize;
 
 end

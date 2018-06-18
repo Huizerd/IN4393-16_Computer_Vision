@@ -173,7 +173,7 @@ end
 % 
 % 
 % %% Bundle adjustment (4 pts)
-% 
+% % Levenberg-Marquardt (sparse variant)
 % 
 % 
 % 

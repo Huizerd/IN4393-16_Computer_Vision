@@ -2,6 +2,7 @@
 model_castle/
 model_castle_png/
 features/
+sba-1.6/
 
 # Ignore MATLAB temp files
 *.asv

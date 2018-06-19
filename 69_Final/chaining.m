@@ -61,5 +61,8 @@ end
 
 % Copy sequences to first image
 point_view_matrix(end-6:end, ib2) = [point_view_matrix(end-6:end-1, ib(ia2)); matches(1, ia2, end)];
+
+% Delete columns they came from
+point_view_matrix(:, ib(ia2)) = [];
    
 end

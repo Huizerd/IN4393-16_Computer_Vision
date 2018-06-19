@@ -144,7 +144,7 @@ for f = 0:size(point_view_matrix, 1) - 1
     %   of next set --> you end up with points that were visible for 5
     %   consecutive frames, which form the connection between both sets
     % 1:end-2 and 3:end since rows are alternating x & y
-    [~, points_common{2, f+1}, points_common{1, f+1}] = intersect(points_next(1:end-2, :)', points(3:end, :)', 'rows');
+    [K, points_common{2, f+1}, points_common{1, f+1}] = intersect(points_next(1:end-2, :)', points(3:end, :)', 'rows');
     
     % Get color for later plotting
     color = [images(sub2ind(size(images), uint16(points(2, :)), uint16(points(1, :)), ones([1, size(points, 2)]), f+1 * ones([1, size(points, 2)]))); ...
@@ -169,6 +169,8 @@ colors_final = colors{1, 1};
 % Also try with pointCloud object
 scene = pointCloud(S{1, 1}', 'Color', uint8(colors{1, 1}'));
 merge_size = 0.15;
+
+pcshow(scene)
 
 % Go over the sets
 for s = 0:size(S, 2) - 1
@@ -205,6 +207,9 @@ for s = 0:size(S, 2) - 1
         
         % Also merge clouds
         scene = pcmerge(scene, new_cloud, merge_size);
+        
+        figure
+        pcshow(scene)
         
     end
     

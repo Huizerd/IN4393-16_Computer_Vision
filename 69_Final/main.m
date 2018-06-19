@@ -207,7 +207,7 @@ point_view_matrix = chaining(matches_8pt_RANSAC);
 % 
 % 
 % %% Bundle adjustment (4 pts)
-% 
+% % Levenberg-Marquardt (sparse variant)
 % 
 % 
 % 

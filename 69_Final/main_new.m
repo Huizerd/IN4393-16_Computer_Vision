@@ -11,7 +11,7 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 
 % Higher = more strict
 match_threshold = 1.25;
-dist_threshold = 10;
+dist_threshold = 25;
 
 % For Harris
 sigma = 1.2.^(-9:12);
@@ -87,7 +87,7 @@ end
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
 
 % Only do if file doesn't exist already
-if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
+if ~exist('matches/matches_8pt_RANSAC_125_25_edges.mat', 'file')
     
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
@@ -107,10 +107,10 @@ if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
         end
     end
 
-    save('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')
+    save('matches/matches_8pt_RANSAC_125_25_edges', 'matches_8pt_RANSAC')
     
 else   
-    load('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')   
+    load('matches/matches_8pt_RANSAC_125_25_edges', 'matches_8pt_RANSAC')   
 end
 
 % If you want to plot a specific pair
@@ -127,6 +127,7 @@ point_view_matrix = chaining(matches_8pt_RANSAC);
 % Cells to store 3D point set for each set of frames & set of points that
 %   are common between 2 consecutive sets
 S = {};
+points = {};
 points_common = {};
 colors = {};
 
@@ -146,27 +147,28 @@ for n = 1:length(consec)
         sift_circ_next = circshift(sift, -f-1, 2); 
 
         % Get x, y for each SIFT descriptor (for current & next set)
-        points = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
-        points_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
+        point = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
+        point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
 
         % Next set is shifted by 1 w.r.t. current set, so look for points that
         %   are present in the last 3 frames of current set, and first 3 frames
         %   of next set --> you end up with points that were visible for 5
         %   consecutive frames, which form the connection between both sets
         % 1:end-2 and 3:end since rows are alternating x & y
-        [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(points_next(1:end-2, :)', points(3:end, :)', 'rows');
+        [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(point_next(1:end-2, :)', point(3:end, :)', 'rows', 'stable');
 
         % Get color for later plotting
-        color = [images(sub2ind(size(images), uint16(points(2, :)), uint16(points(1, :)), ones([1, size(points, 2)]), f+1 * ones([1, size(points, 2)]))); ...
-                 images(sub2ind(size(images), uint16(points(2, :)), uint16(points(1, :)), 2*ones([1, size(points, 2)]), f+1 * ones([1, size(points, 2)]))); ...
-                 images(sub2ind(size(images), uint16(points(2, :)), uint16(points(1, :)), 3*ones([1, size(points, 2)]), f+1 * ones([1, size(points, 2)])))];
+        color = [images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
+                 images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 2*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
+                 images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 3*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)])))];
 
         % Only do if there are at least 3 points
-        if size(points, 2) > 2
+        if size(point, 2) > 2
 
             % Perform structure-from-motion and solve for affine ambiguity
-            S{n, f+1} = SfM(points);
+            S{n, f+1} = SfM(point);
             colors{n, f+1} = color;
+            points{n, f+1} = point;
 
         end
     end
@@ -176,73 +178,113 @@ for n = 1:length(consec)
     
 end
 
-% Stitch to this first set
-S_final = S{1, 1};
-colors_final = colors{1, 1};
+% % Stitch to this first set
+% S_final = S{1, 1};
+% colors_final = colors{1, 1};
+% d_sum = 0;
+% 
+% % Also try with pointCloud object
+% inverted_scene = [S{1, 1}(1, :); -S{1, 1}(3, :); -S{1, 1}(2, :)]';
+% scene = pointCloud(inverted_scene, 'Color', uint8(colors{1, 1}'));
+% merge_size = 0.01;
+% 
+% % Go over the sets
+% for s = 0:size(S, 2) - 1
+%     
+%     % Shift cell array circularly
+%     S_circ = circshift(S, -s, 2);
+%     colors_circ = circshift(colors, -s, 2);
+%     
+%     % Minimum number of rows, to check if both sets > 0 points
+%     % min_cols = min(cellfun('size', S_circ(1, 1:2), 2));
+%     
+%     % Common points has to be > 0
+%     if ~isempty(points_common{1, s+1})
+%         
+%         if s ~= size(S, 2) -1
+%             
+%             % Plot matching points
+%             view_1 = S_circ{1, 1}(:, points_common{1, s+1})';
+%             view_2 = S_circ{1, 2}(:, points_common{2, s+1})';
+% 
+%             % Save colors
+%             colors_final = [colors_final colors_circ{1, 2}];
+% 
+%         else
+% 
+%             % Plot matching points
+%             view_1 = S_circ{1, 2}(:, points_common{2, s+1})';
+%             view_2 = S_circ{1, 1}(:, points_common{1, s+1})';
+% 
+%             % Save colors
+%             colors_final = [colors_final colors_circ{1, 1}];
+% 
+%         end
+%         
+%         % Get transformation between 3D point sets
+%         [d, K, tform] = procrustes(view_1, view_2);
+%         
+%         % All rows are equal for c --> convert to 1 row to allow pointwise
+%         %   ops
+%         tform.c = tform.c(1, :);
+%         
+%         if s ~= size(S, 2) - 1
+% 
+%             % Do transform, see MATLAB's procrustes documentation
+%             Z = tform.b * S_circ{1, 2}' * tform.T + tform.c;
+% 
+%         else
+% 
+%             % Do transform, see MATLAB's procrustes documentation
+%             Z = tform.b * S_circ{1, 1}' * tform.T + tform.c;
+% 
+%         end
+%         
+%         % SAVE Z IN S FOR NEXT TRANSFORM
+%         if s ~= size(S, 2) - 1
+%             S{1, s+2} = Z';
+%         else
+%             S{1, end} = Z';
+%         end
+%         
+%         if d < 0.1
+%             
+%             d_sum = d_sum + d;
+%             
+%             if s ~= size(S, 2) - 1
+% 
+%                 % Convert to pointCloud
+%                 new_cloud = pointCloud([Z(:, 1) -Z(:, 3) -Z(:, 2)], 'Color', uint8(colors_circ{1, 2}'));
+% 
+%             else
+% 
+%                 % Convert to pointCloud
+%                 new_cloud = pointCloud([Z(:, 1) -Z(:, 3) -Z(:, 2)], 'Color', uint8(colors_circ{1, 1}'));
+% 
+%             end
+% 
+%             % Extend final 3D point set --> check dimensions
+%             S_final = [S_final Z'];
+% 
+%             % Also merge clouds
+%             scene = pcmerge(scene, new_cloud, merge_size);
+%             
+%             figure
+%             subplot(1, 2, 1)
+%             scatter3(view_1(:, 1), view_1(:, 2), view_1(:, 3), 'b.')
+%             hold on
+%             scatter3(view_2(:, 1), view_2(:, 2), view_2(:, 3), 'r.')
+%             scatter3(K(:, 1), K(:, 2), K(:, 3), 'g.')
+%             title(num2str(d))
+%             subplot(1, 2, 2)
+%             pcshow(scene, 'MarkerSize', 100)
+%             
+%         end    
+%     end  
+% end
 
-% Also try with pointCloud object
-inverted_scene = [S{1, 1}(1, :); -S{1, 1}(3, :); -S{1, 1}(2, :)]';
-scene = pointCloud(inverted_scene, 'Color', uint8(colors{1, 1}'));
-merge_size = 0.01;
-
-% Go over the sets
-for s = 0:size(S, 2) - 1
-    
-    % Shift cell array circularly
-    S_circ = circshift(S, -s, 2);
-    colors_circ = circshift(colors, -s, 2);
-    
-    % Minimum number of rows, to check if both sets > 0 points
-    % min_cols = min(cellfun('size', S_circ(1, 1:2), 2));
-    
-    % Common points has to be > 0
-    if ~isempty(points_common{1, s+1})
-        
-        % Save colors
-        colors_final = [colors_final colors_circ{1, 2}];
-        
-        % Plot matching points
-        view_1 = S_circ{1, 1}(:, points_common{1, s+1})';
-        view_2 = S_circ{1, 2}(:, points_common{2, s+1})';
-        
-        % Get transformation between 3D point sets
-        % Transpose since x, y, z have to be columns
-        [d, K, tform] = procrustes(view_1, view_2);
-        
-        % All rows are equal for c --> convert to 1 row to allow pointwise
-        %   ops
-        tform.c = tform.c(1, :);
-        
-        % Do transform, see MATLAB's procrustes documentation
-        Z = tform.b * S_circ{1, 2}' * tform.T + tform.c;
-        
-        % SAVE Z IN S FOR NEXT TRANSFORM
-        S{1, s+2} = Z';
-        
-        if d < 0.1
-        
-            % Convert to pointCloud
-            new_cloud = pointCloud([Z(:, 1) -Z(:, 3) -Z(:, 2)], 'Color', uint8(colors_circ{1, 2}'));
-
-            % Extend final 3D point set --> check dimensions
-            S_final = [S_final Z'];
-
-            % Also merge clouds
-            scene = pcmerge(scene, new_cloud, merge_size);
-            
-            figure
-            subplot(1, 2, 1)
-            scatter3(view_1(:, 1), view_1(:, 2), view_1(:, 3), 'b.')
-            hold on
-            scatter3(view_2(:, 1), view_2(:, 2), view_2(:, 3), 'r.')
-            scatter3(K(:, 1), K(:, 2), K(:, 3), 'g.')
-            title(num2str(d))
-            subplot(1, 2, 2)
-            pcshow(scene, 'MarkerSize', 100)
-            
-        end    
-    end  
-end
+% stitching_new
+stitching_new_2
 
 % Check for close points in some way? --> can be done using pcmerge
 
@@ -259,4 +301,7 @@ end
 
 %% 3D model plotting (4 pts)
 
+figure;
 pcshow(scene, 'MarkerSize', 100)
+title(num2str(d_sum));
+

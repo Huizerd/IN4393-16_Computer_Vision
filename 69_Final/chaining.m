@@ -53,9 +53,16 @@ for i = 2:size(matches, 3) - 1
     add(i:i+1, :) = new;
     point_view_matrix = [point_view_matrix add]; 
     
-% Different approach for last pair (16-1)
-[~, ia, ~] = intersect(matches(1, :, 16), point_view_matrix(end, :));  % intersection between frame 16 of pair 16-1 and frame 16 of pair 15-16
-[~, ia2, ib2] = intersect(matches(2, ia, 16), point_view_matrix(1, :));  % of those matches, select those that also have an intersection between frame 1 of pair 16-1 and frame 1 of pair 1-2, in order to add them to the correct column
-point_view_matrix(15:16, ib2) = matches(:, ia2, 16);
+end
+
+% Different approach for last pair
+[~, ia, ib] = intersect(matches(1, :, end), point_view_matrix(end, :));  % intersection between frame end of pair end-1 and frame end of pair end-1-end
+[~, ia2, ib2] = intersect(matches(2, ia, end), point_view_matrix(1, :));  % of those matches, select those that also have an intersection between frame 1 of pair end-1 and frame 1 of pair 1-2, in order to add them to the correct column
+
+% Copy sequences to first image
+point_view_matrix(end-6:end, ib2) = [point_view_matrix(end-6:end-1, ib(ia2)); matches(1, ia2, end)];
+
+% Delete columns they came from
+point_view_matrix(:, ib(ia2)) = [];
    
 end

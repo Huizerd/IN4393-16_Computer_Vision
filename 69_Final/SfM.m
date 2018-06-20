@@ -1,4 +1,4 @@
-function S = SfM(points)
+function S_hat = SfM(points)
 % SFM Performs structure-from-motion and solves for the affine ambiguity.
 %
 % Inputs:
@@ -22,25 +22,27 @@ points_center = points - repmat(sum(points, 2) / N_points, 1, N_points);
 
 % Decompose into measurements M and shape S
 % Only top 3 singular values
-M_hat = U(:, 1:3) * sqrt(W(1:3, 1:3));
-S_hat = sqrt(W(1:3, 1:3)) * V(:, 1:3)';
+M_hat = U(:, 1:3) * sqrtm(W(1:3, 1:3));
+S_hat = sqrtm(W(1:3, 1:3)) * V(:, 1:3)';
 
-% Solve for affine ambiguity
-% What is A? Then use it in L0   
-A  = M_hat;
-L0 = inv(A' * A);
+% Put affine ambiguity as conditional?
 
-% Save Mhat for myfun
-save('M_hat', 'M_hat')
-
-% Solve for L
-L = lsqnonlin(@cam_residuals, L0);
-
-% Cholesky decomposition
-C = chol(L, 'lower');
-
-% Update M and S with C
-M = M_hat * C;
-S = pinv(C) * S_hat;
+% % Solve for affine ambiguity
+% % What is A? Then use it in L0   
+% A  = M_hat;
+% L0 = pinv(A' * A);
+% 
+% % Save Mhat for myfun
+% save('M_hat', 'M_hat')
+% 
+% % Solve for L
+% L = lsqnonlin(@cam_residuals, L0);
+% 
+% % Cholesky decomposition
+% C = chol(L, 'lower');
+% 
+% % Update M and S with C
+% M = M_hat * C;
+% S = pinv(C) * S_hat;
 
 end

@@ -64,10 +64,10 @@ if ~exist('features/sift_edges.mat', 'file')
         
         % Also get VLFeat SIFT and concatenate
         % Potentially many false matches? --> allright
-        [sift_vlfeat_f, sift_vlfeat_d] = vl_sift(single(images_gray(:, :, i)));
+        % [sift_vlfeat_f, sift_vlfeat_d] = vl_sift(single(images_gray(:, :, i)));
         
-        sift{1, i} = [sift{1, i} sift_vlfeat_f];
-        sift{2, i} = [sift{2, i} sift_vlfeat_d];
+        % sift{1, i} = [sift{1, i} sift_vlfeat_f];
+        % sift{2, i} = [sift{2, i} sift_vlfeat_d];
 
     end
     

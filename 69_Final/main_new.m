@@ -2,7 +2,7 @@
 % 
 % Jesse Hagenaars & Michiel Mollema - 04.06.2018
 
-clc; clear; close all
+clc; clear; %close all
 
 run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
@@ -87,7 +87,7 @@ end
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
 
 % Only do if file doesn't exist already
-if ~exist('matches/matches_8pt_RANSAC_125_25_edges.mat', 'file')
+if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
     
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
@@ -107,10 +107,10 @@ if ~exist('matches/matches_8pt_RANSAC_125_25_edges.mat', 'file')
         end
     end
 
-    save('matches/matches_8pt_RANSAC_125_25_edges', 'matches_8pt_RANSAC')
+    save('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')
     
 else   
-    load('matches/matches_8pt_RANSAC_125_25_edges', 'matches_8pt_RANSAC')   
+    load('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')   
 end
 
 % If you want to plot a specific pair

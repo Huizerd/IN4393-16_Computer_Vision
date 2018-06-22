@@ -10,3 +10,4 @@ sba-1.6/
 # Ignore others
 *.mat
 *.pdf
+*.fig

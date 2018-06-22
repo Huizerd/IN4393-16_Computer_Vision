@@ -1,4 +1,4 @@
-function S = SfM(points)
+function [M, S] = SfM(points_center)
 % SFM Performs structure-from-motion and solves for the affine ambiguity.
 %
 % Inputs:
@@ -9,13 +9,6 @@ function S = SfM(points)
 % - S: matrix of 3D points
 %
 % Jesse Hagenaars & Michiel Mollema - 11.06.2018
-
-% Sizes
-[N_frames, N_points] = size(points);
-N_frames = N_frames / 2;
-
-% Center points
-points_center = points - repmat(sum(points, 2) / N_points, 1, N_points);
 
 % SVD
 [U, W, V] = svd(points_center);
@@ -32,11 +25,19 @@ S_hat = sqrtm(W(1:3, 1:3)) * V(:, 1:3)';
 A  = M_hat;
 L0 = pinv(A' * A);
 
-% Save Mhat for myfun
+% Save Mhat for cam_residuals
 save('M_hat', 'M_hat')
 
 % Solve for L
-L = lsqnonlin(@cam_residuals, L0);
+options = optimoptions(@lsqnonlin, 'Display', 'off');
+L = lsqnonlin(@cam_residuals, L0, [], [], options);
+
+% Check symmetry
+symm = issymmetric(round(L, 3));
+
+if ~symm
+    disp('L is not symmetric!')
+end
 
 % Cholesky decomposition
 [C, e] = chol(L, 'lower');

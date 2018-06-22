@@ -136,7 +136,8 @@ if ~exist('matches/matches_8pt_RANSAC_125_10_combined_bbox.mat', 'file')
 
     save('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')
     
-else   
+else
+    disp('Loading matches...')
     load('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')   
 end
 
@@ -146,10 +147,14 @@ end
 
 %% Chaining (8 pts)
 
+disp('Chaining...')
+
 point_view_matrix = chaining(matches_8pt_RANSAC);
 
 
 %% Stitching (12 pts)
+
+disp('Stitching...')
 
 % Cells to store 3D point set for each set of frames & set of points that
 %   are common between 2 consecutive sets
@@ -175,14 +180,14 @@ for n = 1:length(consec)
 
         % Get x, y for each SIFT descriptor (for current & next set)
         point = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
-        point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
+        % point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
 
         % Next set is shifted by 1 w.r.t. current set, so look for points that
         %   are present in the last 3 frames of current set, and first 3 frames
         %   of next set --> you end up with points that were visible for 5
         %   consecutive frames, which form the connection between both sets
         % 1:end-2 and 3:end since rows are alternating x & y
-        [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(point_next(1:end-2, :)', point(3:end, :)', 'rows', 'stable');
+        % [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(point_next(1:end-2, :)', point(3:end, :)', 'rows', 'stable');
 
         % Get color for later plotting
         color = [images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
@@ -191,11 +196,27 @@ for n = 1:length(consec)
 
         % Only do if there are at least 3 points
         if size(point, 2) > 2
-
+            
+            % Center points
+            N_cam = size(point, 1) / 2; N_pt = size(point, 2);
+            point_center = point - repmat(sum(point, 2) / N_pt, 1, N_pt);
+            
             % Perform structure-from-motion and solve for affine ambiguity
-            S{n, f+1} = SfM(point);
+            [M, S{n, f+1}] = SfM(point_center);
             colors{n, f+1} = color;
             points{n, f+1} = point;
+            
+            % Do bundle adjustment
+            % x = D (measurement matrix) = point_center
+            % PX = M * S --> reshape M & S to 1 vector to allow concurrent
+            %   optimization
+            MS_0 = [M(:); S{n, f+1}(:)];
+            options = optimoptions(@lsqnonlin, 'Display', 'iter');
+            MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
+            
+            % Reshape back
+            M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
+            S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
 
         end
     end
@@ -318,7 +339,22 @@ stitching_new_2
 
 %% Bundle adjustment (4 pts)
 
+% disp('Bundle adjustment...')
+% 
+% % Get measurement matrix D
+% D_cell = points(1, logical(S_used));
+% 
+% % Convert to matrix
+% D = D_cell{1, 1};
+% 
+% for i = 2:size(D_cell, 2)
+%     row = 2*i - 1;
+%     D(row:row+5, end+1:end+size(D_cell{1, i}, 2)) = D_cell{1, i};
+% end
 
+% Do bundle adjustment
+% PX0 = [cameras(:);pointcloud(:)];
+% PX = lsqnonlin(@bundleAdjustment,PX0);
 
 
 %% Eliminate affine ambiguity (4 pts)

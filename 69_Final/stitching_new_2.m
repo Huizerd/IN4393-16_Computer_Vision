@@ -1,3 +1,6 @@
+% Sets used, for BA later
+S_used = zeros(1, size(S, 2));
+
 % First, stitch 1st set of 3 to 1st set of 4 (delete partial columns)
 triple = point_view_matrix(1:3, :); triple(:, ~all(triple, 1)) = [];
 quad = point_view_matrix(1:4, :); quad(:, ~all(quad, 1)) = [];
@@ -15,6 +18,7 @@ S{1, 1} = triple_t';
 % Only when score is good
 if d < 0.1
     S_final = triple_t';
+    S_used(1) = 1;
     colors_final = colors{1, 1};
     d_sum = d;
 else
@@ -69,6 +73,7 @@ for s = 1:size(S, 2) - 2
         
         S_final = [S_final triple_t'];
         colors_final = [colors_final colors{1, s+1}];
+        S_used(s+1) = 1;
         
         % Convert to pointCloud
         inverted_cloud = [triple_t(:, 1) triple_t(:, 2) -triple_t(:, 3)];
@@ -139,11 +144,12 @@ dummy = S_circ{1, 1};  % for plotting
 S_circ{1, 1} = triple_t';
 
 % Add when good score
-if d < 0.2
+if d < 0.1
 
     d_sum = d_sum + d;
 
     S_final = [S_final triple_t'];
+    S_used(end) = 1;
     colors_final = [colors_final colors{1, 19}];
 
     % Convert to pointCloud

@@ -86,7 +86,7 @@ for s = 1:size(S, 2) - 2
         scatter3(triple_t(:, 1), triple_t(:, 2), triple_t(:, 3), 'g.')
         title(num2str(d))
         subplot(1, 2, 2)
-        pcshow(scene, 'MarkerSize', 100)
+        pcshow(scene)
         
     end
     
@@ -162,6 +162,6 @@ if d < 0.2
     scatter3(triple_t(:, 1), triple_t(:, 2), triple_t(:, 3), 'g.')
     title(num2str(d))
     subplot(1, 2, 2)
-    pcshow(scene, 'MarkerSize', 100)
+    pcshow(scene)
 
 end

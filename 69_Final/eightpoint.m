@@ -1,4 +1,4 @@
-function [F_best, inliers_1, inliers_2, inliers_match_idx] = eightpoint(x1, y1, x2, y2, matches, threshold)
+function [F_best, inliers_1, inliers_2, inliers_match_idx] = eightpoint(x1, y1, x2, y2, matches, threshold, iter)
 % EIGHTPOINT Determines the fundamental matrix F with the highest number of
 % inliers using the 8-point algorithm and RANSAC. Also returns the indices
 % and coordinates of the inliers for both images.
@@ -50,7 +50,7 @@ p_hat_acc = T2 * p_acc;
 %% RANSAC
 
 n_inliers_best = 0;
-N = 1000;
+N = iter;
 
 for n = 1:N
     

@@ -9,13 +9,18 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
 
-% Higher = more strict
+% For RANSAC & matching
 match_threshold = 1.25;
 dist_threshold = 25;
+iter = 10000;
 
 % For Harris
 sigma = 1.2.^(-9:12);
-threshold_R = 5e-5;
+threshold_R = 1e-5;
+do_edges = 0;
+
+% Use Oxford SIFT as well
+do_oxford = 1;
 
 
 %% Load images
@@ -43,8 +48,13 @@ end
  
 %% Feature point detection & extraction of SIFT descriptors (4 pts)
 
+% Harris-affine & Hessian-affine SIFT obtained using detectors from
+%   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
+harris_files = dir('features/*.png.haraff.sift');
+hessian_files = dir('features/*.png.hesaff.sift');
+
 % Only do if file doesn't exist already
-if ~exist('features/sift_edges.mat', 'file')
+if ~exist('features/sift_combined.mat', 'file')
     
     sift = {};  
 
@@ -55,31 +65,48 @@ if ~exist('features/sift_edges.mat', 'file')
         % Gaussian filter to smooth image
         % smooth = uint8(conv2(gaussian(3), gaussian(3), images_gray(:, :, i), 'same'));
         
-        % Detect edges
-        edges = edge(images_gray(:, :, i), 'Sobel');
+        % Detect edges if do_edges
+        if do_edges
+            image = edge(images_gray(:, :, i), 'Sobel');
+        else
+            image = images_gray(:, :, i);
+        end
         
         % Get SIFT features based on Harris corners
         % [features, descriptors]
-        [sift{1, i}, sift{2, i}] = get_sift_harris(edges, images_gray(:, :, i), sigma, threshold_R);
+        [sift{1, i}, sift{2, i}] = get_sift_harris(image, images_gray(:, :, i), sigma, threshold_R);
         
         % Also get VLFeat SIFT and concatenate
-        % Potentially many false matches? --> allright
+        % Potentially many false matches? --> alright
         % [sift_vlfeat_f, sift_vlfeat_d] = vl_sift(single(images_gray(:, :, i)));
         
         % sift{1, i} = [sift{1, i} sift_vlfeat_f];
         % sift{2, i} = [sift{2, i} sift_vlfeat_d];
+        
+        % Load SIFT from Oxford if do_oxford
+        if do_oxford
+            
+            sift_harris_oxford = dlmread([harris_files(i).folder '/' harris_files(i).name], ' ', 2, 0);
+            sift_hessian_oxford = dlmread([hessian_files(i).folder '/' hessian_files(i).name], ' ', 2, 0);
+            oxford_combined = cat(1, sift_harris_oxford, sift_hessian_oxford);
+            
+            % Concatenate x, y and descriptor
+            sift{1, i} = [sift{1, i} oxford_combined(:, 1:2)'];
+            sift{2, i} = [sift{2, i} oxford_combined(:, 6:end)'];      
+            
+        end
 
     end
     
     % Save
-    save('features/sift_edges', 'sift')
+    save('features/sift_combined', 'sift')
     
 else
     
     disp('Loading features...')
     
     % Load already detected features
-    load('features/sift_edges', 'sift')
+    load('features/sift_combined', 'sift')
     
 end
 
@@ -87,7 +114,7 @@ end
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
 
 % Only do if file doesn't exist already
-if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
+if ~exist('matches/matches_8pt_RANSAC_125_10_combined_bbox.mat', 'file')
     
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
@@ -98,7 +125,7 @@ if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
         fprintf('8-point RANSAC, image %d\n', i)
         
         % Do 8-point RANSAC
-        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, i);
+        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
         matches_8pt_RANSAC{1, i} = inliers_idx;
         
         if i ~= size(sift, 2)
@@ -107,10 +134,10 @@ if ~exist('matches/matches_8pt_RANSAC_125_10_edges.mat', 'file')
         end
     end
 
-    save('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')
+    save('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')
     
 else   
-    load('matches/matches_8pt_RANSAC_125_10_edges', 'matches_8pt_RANSAC')   
+    load('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')   
 end
 
 % If you want to plot a specific pair
@@ -302,6 +329,6 @@ stitching_new_2
 %% 3D model plotting (4 pts)
 
 figure;
-pcshow(scene, 'MarkerSize', 100)
+pcshow(scene)
 title(num2str(d_sum));
 

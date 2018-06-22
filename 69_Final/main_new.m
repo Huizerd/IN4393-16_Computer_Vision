@@ -217,6 +217,9 @@ for n = 1:length(consec)
             % Reshape back
             M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
             S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
+            
+            % Put in final array
+            S{n, f+1} = S_BA;
 
         end
     end

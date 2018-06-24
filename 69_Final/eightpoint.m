@@ -93,13 +93,13 @@ for n = 1:N
     
     % Find inliers for all points p
     Fp = F_ransac_denorm * p;
-    Ftp= F_ransac_denorm'* p;
+    Ftp_acc = F_ransac_denorm' * p_acc;
     d  = zeros(1, length(p));
     
     for i = 1:length(p)
         
         d(i) = (p_acc(:,i)' * F_ransac_denorm * p(:,i))^2 / ...
-            (Fp(1,i)^2 + Fp(2,i)^2 + Ftp(1,i)^2 + Ftp(2,i)^2);
+            (Fp(1,i)^2 + Fp(2,i)^2 + Ftp_acc(1,i)^2 + Ftp_acc(2,i)^2);
         
     end
 

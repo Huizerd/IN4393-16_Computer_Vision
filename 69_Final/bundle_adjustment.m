@@ -10,12 +10,14 @@ S = reshape(MS(end-3*n+1:end), [3 n]);
 % To make more readable
 PX = M * S;
 
-for i = 1:m
-    for j = 1:n
-        
-        E = E + (D(i*2-1, j) - PX(i*2-1, j))^2 + (D(i*2, j) - PX(i*2, j))^2;
-        
-    end
-end
+E = D - PX;
+
+% for i = 1:m
+%     for j = 1:n
+%         
+%         E = E + (D(i*2-1, j) - PX(i*2-1, j))^2 + (D(i*2, j) - PX(i*2, j))^2;
+%         
+%     end
+% end
 
 end

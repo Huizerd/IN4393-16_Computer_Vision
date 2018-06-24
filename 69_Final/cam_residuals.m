@@ -1,4 +1,4 @@
-function residuals = cam_residuals(L)
+function residuals = cam_residuals(L, M_hat)
 % CAM_RESIDUALS Returns the residuals computed for every camera view point.
 %
 % Inputs:
@@ -8,9 +8,6 @@ function residuals = cam_residuals(L)
 %
 % Jesse Hagenaars & Michiel Mollema - 11.06.2018
 % Written by IN4393-16 staff
-
-% Load the saved transformation matrix M
-load('M_hat', 'M_hat');
 
 % Pre-allocate the residual matrix
 residuals = zeros(size(M_hat, 1) / 2, 4);

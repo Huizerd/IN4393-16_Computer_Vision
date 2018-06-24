@@ -11,7 +11,7 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 
 % For RANSAC & matching
 match_threshold = 1.25;
-dist_threshold = 25;
+dist_threshold = 10;
 iter = 10000;
 
 % For Harris
@@ -54,7 +54,7 @@ harris_files = dir('features/*.png.haraff.sift');
 hessian_files = dir('features/*.png.hesaff.sift');
 
 % Only do if file doesn't exist already
-if ~exist('features/sift_combined.mat', 'file')
+if ~exist('features/sift_final.mat', 'file')
     
     sift = {};  
 
@@ -99,14 +99,14 @@ if ~exist('features/sift_combined.mat', 'file')
     end
     
     % Save
-    save('features/sift_combined', 'sift')
+    save('features/sift_final', 'sift')
     
 else
     
     disp('Loading features...')
     
     % Load already detected features
-    load('features/sift_combined', 'sift')
+    load('features/sift_final', 'sift')
     
 end
 
@@ -114,42 +114,71 @@ end
 %%  Normalized 8-point RANSAC to find best matches (4 pts)
 
 % Only do if file doesn't exist already
-if ~exist('matches/matches_8pt_RANSAC_125_10_combined_bbox.mat', 'file')
+if ~exist('matches/matches_final.mat', 'file')
     
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
     
     % Loop over images
-    for i = 1:size(sift, 2)
+    for i = 1:size(sift, 2) - 1
 
         fprintf('8-point RANSAC, image %d\n', i)
         
         % Do 8-point RANSAC
-        [F_ransac_denorm, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
+        [~, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
         matches_8pt_RANSAC{1, i} = inliers_idx;
+        
+        % Try MATLAB's version
+        % Get coords and descriptors
+        % x1 = sift{1,i}(1,:);
+        % y1 = sift{1,i}(2,:);
+        % desc1 = sift{2,i}(:,:);
+
+        % x2 = sift{1,i+1}(1,:);
+        % y2 = sift{1,i+1}(2,:);
+        % desc2 = sift{2,i+1}(:,:);
+        
+        % [matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
+        % [~, idx] = estimateFundamentalMatrix([x1(matches(1, :))' y1(matches(1, :))'], [x2(matches(2, :))' y2(matches(2, :))'], 'method', 'RANSAC', 'NumTrials', iter, 'DistanceThreshold', dist_threshold);
+        % matches_8pt_RANSAC{1, i} = matches(:, idx);
         
         if i ~= size(sift, 2)
             figure;
-            showMatchedFeatures(images(:, :, :, i), images(:, :, :, i+1), inliers_1, inliers_2) 
+            showMatchedFeatures(images(:, :, :, i), images(:, :, :, i+1), inliers_1, inliers_2)
+        else
+            figure;
+            showMatchesFeatures(images(:, :, :, i), images(:, :, :, 1), inliers_1, inliers_2)
         end
     end
+    
+    x1 = sift{1,19}(1,:);
+    y1 = sift{1,19}(2,:);
+    desc1 = sift{2,19}(:, :);
 
-    save('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')
+    x2 = sift{1,1}(1,:);
+    y2 = sift{1,1}(2,:);
+    desc2 = sift{2,1}(:, :);
+
+    [matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
+    [~, idx] = estimateFundamentalMatrix([x1(matches(1, :))' y1(matches(1, :))'], [x2(matches(2, :))' y2(matches(2, :))'], 'method', 'Norm8Point', 'NumTrials', iter, 'DistanceThreshold', dist_threshold);
+    matches_8pt_RANSAC{1, 19} = matches(:, idx);
+
+    save('matches/matches_final', 'matches_8pt_RANSAC')
     
 else
     disp('Loading matches...')
-    load('matches/matches_8pt_RANSAC_125_10_combined_bbox', 'matches_8pt_RANSAC')   
+    load('matches/matches_final', 'matches_8pt_RANSAC')   
 end
 
 % If you want to plot a specific pair
 % showMatchedFeatures(images(:, :, :, 1), images(:, :, :, 2), sift{1, 1}(1:2, matches_8pt_RANSAC{1, 1}(1, :))', sift{1, 2}(1:2, matches_8pt_RANSAC{1, 1}(2, :))')
-% bound_x = [885 3286 3286 885 885]; bound_y = [726 726 1906 1906 726]; hold on; plot(bound_x, bound_y)
+
 
 %% Chaining (8 pts)
 
 disp('Chaining...')
 
-point_view_matrix = chaining(matches_8pt_RANSAC);
+point_view_matrix = chaining_2(matches_8pt_RANSAC);
 
 
 %% Stitching (12 pts)
@@ -161,6 +190,7 @@ disp('Stitching...')
 S = {};
 points = {};
 points_common = {};
+pvm = {};  % for new version (indices instead of coords)
 colors = {};
 
 % Use n consecutive frames each time
@@ -181,7 +211,11 @@ for n = 1:length(consec)
         % Get x, y for each SIFT descriptor (for current & next set)
         point = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
         % point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
-
+        
+        % Write to new pv matrix for new version
+        pvm{n, f+1} = pv_matrix_circ(1:consec(n), :);
+        pvm{n, f+1}(:, ~all(pvm{n, f+1}, 1)) = [];
+        
         % Next set is shifted by 1 w.r.t. current set, so look for points that
         %   are present in the last 3 frames of current set, and first 3 frames
         %   of next set --> you end up with points that were visible for 5
@@ -206,26 +240,42 @@ for n = 1:length(consec)
             colors{n, f+1} = color;
             points{n, f+1} = point;
             
-            % Do bundle adjustment
-            % x = D (measurement matrix) = point_center
-            % PX = M * S --> reshape M & S to 1 vector to allow concurrent
-            %   optimization
-            MS_0 = [M(:); S{n, f+1}(:)];
-            options = optimoptions(@lsqnonlin, 'Display', 'iter');
-            MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
-            
-            % Reshape back
-            M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
-            S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
-            
-            % Put in final array
-            S{n, f+1} = S_BA;
+%             % Do bundle adjustment
+%             % x = D (measurement matrix) = point_center
+%             % PX = M * S --> reshape M & S to 1 vector to allow concurrent
+%             %   optimization
+%             MS_0 = [M(:); S{n, f+1}(:)];
+%             % 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16
+%             options = optimoptions(@lsqnonlin, 'Algorithm', 'levenberg-marquardt', 'InitDamping', 1e2, 'ScaleProblem', 'jacobian', 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'Display', 'iter');
+%             MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
+%             
+%             % Reshape back
+%             M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
+%             S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
+%             
+%             % Put in final array
+%             S{n, f+1} = S_BA;
 
         end
     end
     
     % Increment count to write in next 2 rows
     count = count + 1;
+    
+end
+
+% Construct models for new version
+triple_models = {};
+quad_models = {};
+
+for v = 1:size(S, 2)
+    
+    triple_models{v, 1} = S{1, v};
+    triple_models{v, 2} = pvm{1, v};
+    triple_models{v, 3} = colors{1, v}';
+    quad_models{v, 1} = S{2, v};
+    quad_models{v, 2} = pvm{2, v};
+    quad_models{v, 3} = colors{2, v}';
     
 end
 
@@ -335,7 +385,10 @@ end
 % end
 
 % stitching_new
-stitching_new_2
+% stitching_new_2
+
+[complete_model, complete_colors, ~, ~] = model_stitching_r(triple_models, quad_models);
+scene = pointCloud(complete_model', 'Color', complete_colors);
 
 % Check for close points in some way? --> can be done using pcmerge
 
@@ -367,7 +420,9 @@ stitching_new_2
 
 %% 3D model plotting (4 pts)
 
+[scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
+
 figure;
-pcshow(scene)
-title(num2str(d_sum));
+pcshow(scene, 'MarkerSize', 15)
+% title(num2str(d_sum));
 

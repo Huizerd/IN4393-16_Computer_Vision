@@ -22,15 +22,15 @@ S_hat = sqrtm(W(1:3, 1:3)) * V(:, 1:3)';
 
 % Solve for affine ambiguity
 % What is A? Then use it in L0   
-A  = M_hat;
+A = M_hat;
+% A = M_hat(1:2, :);
 L0 = pinv(A' * A);
-
-% Save Mhat for cam_residuals
-save('M_hat', 'M_hat')
 
 % Solve for L
 options = optimoptions(@lsqnonlin, 'Display', 'off');
-L = lsqnonlin(@cam_residuals, L0, [], [], options);
+% options = optimoptions(@lsqnonlin, 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16);
+% L = lsqnonlin(@(x)cam_residuals(x, M_hat), L0, ones(size(L0))*-1e-3, ones(size(L0))*1e-3, options);
+L = lsqnonlin(@(x)cam_residuals(x, M_hat), L0, [], [], options);
 
 % Check symmetry
 symm = issymmetric(round(L, 3));

@@ -23,6 +23,7 @@ M(:,:,3) = Iy.^2;
 
 % Smooth M with a gaussian at the integration scale sigma.
 M = imfilter(M, fspecial('gaussian', ceil(sigma*6+1), sigma), 'replicate', 'same');
+M = M * (sigma*gamma)^2;  % multiply with square of sigma_D
 
 % Compute the cornerness R
 trace = M(:,:,1) + M(:,:,3);
@@ -45,6 +46,6 @@ R = ((R>threshold) & ((imdilate(R, strel('square', 3))==R))) ; %.* sigma;
 % imshow(R,[]);
 
 % Return the coordinates
-[r,c] = find(R == 1);
+[r,c] = find(R);
 
 end

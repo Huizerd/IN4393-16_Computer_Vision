@@ -12,8 +12,8 @@ for s = 1:length(sigma)
     [r, c] = harris(edges, sigma(s), threshold_R);
 
     % Calculate Laplacian
-    % laplacian_rick = imfilter(edges, fspecial('log',[3 3],sigma(s)),'replicate','same') .* (sigma(s)^2);
-    laplacian_i = sigma(s)^2 * (imageDerivatives(edges, sigma(s)*gamma, 'xx') + imageDerivatives(edges, sigma(s)*gamma, 'yy'));
+    % laplacian_i = imfilter(edges, fspecial('log',[3 3],sigma(s)),'replicate','same') .* (sigma(s)^2);
+    laplacian_i = sigma(s)^2 * (imageDerivatives(edges, sigma(s), 'xx') + imageDerivatives(edges, sigma(s), 'yy'));
 
     % Put in store
     laplacian(sub2ind(size(laplacian), r, c, ones(size(r)) * s)) = abs(laplacian_i(sub2ind(size(laplacian_i), r, c)));
@@ -41,9 +41,10 @@ end
 
 % Get max sigmas as list
 sigma_list = sigma_max(sub2ind(size(sigma_max), r, c));
+sigma_list = sigma_list * 2 + 1;
 
 % Now do SIFT
-[features, descriptors] = vl_sift(single(image), 'Frames', [c'; r'; (2*sigma_list + 1)'; zeros(size(sigma_list))'], 'Orientations');
+[features, descriptors] = vl_sift(single(image), 'Frames', [c'; r'; sigma_list'; zeros(size(sigma_list))'], 'Orientations');
 
 % Select only x, y from features
 features = features(1:2, :);

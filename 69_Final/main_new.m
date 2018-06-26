@@ -12,7 +12,7 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % For RANSAC & matching
 match_threshold = 1.25;
 dist_threshold = 10;
-iter = 10000;
+iter = 10000;  % --> 25000
 
 % For Harris
 sigma = 1.2.^(-9:12);
@@ -21,6 +21,9 @@ do_edges = 0;
 
 % Use Oxford SIFT as well
 do_oxford = 1;
+
+% Local BA
+do_local_BA = 0;
 
 
 %% Load images
@@ -76,13 +79,6 @@ if ~exist('features/sift_final.mat', 'file')
         % [features, descriptors]
         [sift{1, i}, sift{2, i}] = get_sift_harris(image, images_gray(:, :, i), sigma, threshold_R);
         
-        % Also get VLFeat SIFT and concatenate
-        % Potentially many false matches? --> alright
-        % [sift_vlfeat_f, sift_vlfeat_d] = vl_sift(single(images_gray(:, :, i)));
-        
-        % sift{1, i} = [sift{1, i} sift_vlfeat_f];
-        % sift{2, i} = [sift{2, i} sift_vlfeat_d];
-        
         % Load SIFT from Oxford if do_oxford
         if do_oxford
             
@@ -120,28 +116,14 @@ if ~exist('matches/matches_final.mat', 'file')
     matches_8pt_RANSAC = {};
     
     % Loop over images
-    for i = 1:size(sift, 2) - 1
+    for i = 1:size(sift, 2)
 
         fprintf('8-point RANSAC, image %d\n', i)
         
         % Do 8-point RANSAC
         [~, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
         matches_8pt_RANSAC{1, i} = inliers_idx;
-        
-        % Try MATLAB's version
-        % Get coords and descriptors
-        % x1 = sift{1,i}(1,:);
-        % y1 = sift{1,i}(2,:);
-        % desc1 = sift{2,i}(:,:);
-
-        % x2 = sift{1,i+1}(1,:);
-        % y2 = sift{1,i+1}(2,:);
-        % desc2 = sift{2,i+1}(:,:);
-        
-        % [matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
-        % [~, idx] = estimateFundamentalMatrix([x1(matches(1, :))' y1(matches(1, :))'], [x2(matches(2, :))' y2(matches(2, :))'], 'method', 'RANSAC', 'NumTrials', iter, 'DistanceThreshold', dist_threshold);
-        % matches_8pt_RANSAC{1, i} = matches(:, idx);
-        
+         
         if i ~= size(sift, 2)
             figure;
             showMatchedFeatures(images(:, :, :, i), images(:, :, :, i+1), inliers_1, inliers_2)
@@ -150,28 +132,16 @@ if ~exist('matches/matches_final.mat', 'file')
             showMatchesFeatures(images(:, :, :, i), images(:, :, :, 1), inliers_1, inliers_2)
         end
     end
-    
-    x1 = sift{1,19}(1,:);
-    y1 = sift{1,19}(2,:);
-    desc1 = sift{2,19}(:, :);
-
-    x2 = sift{1,1}(1,:);
-    y2 = sift{1,1}(2,:);
-    desc2 = sift{2,1}(:, :);
-
-    [matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
-    [~, idx] = estimateFundamentalMatrix([x1(matches(1, :))' y1(matches(1, :))'], [x2(matches(2, :))' y2(matches(2, :))'], 'method', 'Norm8Point', 'NumTrials', iter, 'DistanceThreshold', dist_threshold);
-    matches_8pt_RANSAC{1, 19} = matches(:, idx);
 
     save('matches/matches_final', 'matches_8pt_RANSAC')
     
 else
     disp('Loading matches...')
-    load('matches/matches_final', 'matches_8pt_RANSAC')   
+    load('matches/matches_final', 'matches_8pt_RANSAC')  
 end
 
 % If you want to plot a specific pair
-% showMatchedFeatures(images(:, :, :, 1), images(:, :, :, 2), sift{1, 1}(1:2, matches_8pt_RANSAC{1, 1}(1, :))', sift{1, 2}(1:2, matches_8pt_RANSAC{1, 1}(2, :))')
+showMatchedFeatures(images(:, :, :, 18), images(:, :, :, 19), sift{1, 18}(1:2, matches_8pt_RANSAC{1, 18}(1, :))', sift{1, 19}(1:2, matches_8pt_RANSAC{1, 18}(2, :))')
 
 
 %% Chaining (8 pts)
@@ -188,6 +158,7 @@ disp('Stitching...')
 % Cells to store 3D point set for each set of frames & set of points that
 %   are common between 2 consecutive sets
 S = {};
+M = {};
 points = {};
 points_common = {};
 pvm = {};  % for new version (indices instead of coords)
@@ -236,26 +207,32 @@ for n = 1:length(consec)
             point_center = point - repmat(sum(point, 2) / N_pt, 1, N_pt);
             
             % Perform structure-from-motion and solve for affine ambiguity
-            [M, S{n, f+1}] = SfM(point_center);
+            [M{n, f+1}, S{n, f+1}] = SfM(point_center);
             colors{n, f+1} = color;
             points{n, f+1} = point;
             
-%             % Do bundle adjustment
-%             % x = D (measurement matrix) = point_center
-%             % PX = M * S --> reshape M & S to 1 vector to allow concurrent
-%             %   optimization
-%             MS_0 = [M(:); S{n, f+1}(:)];
-%             % 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16
-%             options = optimoptions(@lsqnonlin, 'Algorithm', 'levenberg-marquardt', 'InitDamping', 1e2, 'ScaleProblem', 'jacobian', 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'Display', 'iter');
-%             MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
-%             
-%             % Reshape back
-%             M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
-%             S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
-%             
-%             % Put in final array
-%             S{n, f+1} = S_BA;
+            % Do bundle adjustment
+            if do_local_BA
+                
+                % x = D (measurement matrix) = point_center
+                % PX = M * S --> reshape M & S to 1 vector to allow concurrent
+                %   optimization
+                MS_0 = [M{n, f+1}(:); S{n, f+1}(:)];
+                % 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16
+                % options = optimoptions(@lsqnonlin, 'Algorithm', 'levenberg-marquardt', 'InitDamping', 1e2, 'ScaleProblem', 'jacobian', 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'Display', 'iter');
+                % MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
+                options = optimoptions(@fminunc, 'Display', 'iter');
+                MS = fminunc(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, options);
 
+                % Reshape back
+                M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
+                S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
+
+                % Put in final array
+                S{n, f+1} = S_BA;
+                M{n, f+1} = M_BA;
+                
+            end
         end
     end
     

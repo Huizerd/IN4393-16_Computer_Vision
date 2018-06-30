@@ -1,5 +1,7 @@
 # Ignore data
 model_castle/
+models/
+matches/
 model_castle_png/
 features/
 sba-1.6/

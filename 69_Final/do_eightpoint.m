@@ -1,4 +1,4 @@
-function [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i)
+function [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx, new_matches] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i)
 % DO_EIGHTPOINT Performs 8-point algorithm between two images. First
 % extracts coordinates and descriptors from SIFT features, matches the
 % descriptors, keeps only interesting matches and then performs 8-point
@@ -48,6 +48,8 @@ end
 
 
 %% Get matches
+
+disp('matching...')
 
 [matches, ~] = vl_ubcmatch(desc1, desc2, match_threshold);
 
@@ -109,6 +111,8 @@ end
 
 
 %% Perform the 8-point algorithm
+
+disp('RANSAC...')
 
 [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx] = eightpoint(x1, y1, x2, y2, new_matches, dist_threshold, iter);
 

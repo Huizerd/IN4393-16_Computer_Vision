@@ -4,8 +4,8 @@ function E = bundle_adjustment(D, MS, m, n)
 E = 0;
 
 % Reshape back to M & S
-M = reshape(MS(1:m*6), [2*m 3]);
-S = reshape(MS(end-3*n+1:end), [3 n]);
+S = reshape(MS(1:n*3), [3 n]);
+M = reshape(MS(end-m*6+1:end), [2*m 3]);
 
 % To make more readable
 PX = M * S;

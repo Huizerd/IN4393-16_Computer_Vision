@@ -2,7 +2,7 @@
 % 
 % Jesse Hagenaars & Michiel Mollema - 04.06.2018
 
-clc; clear; %close all
+clc; clear; close all
 
 run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
@@ -10,8 +10,8 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 %% Settings
 
 % For RANSAC & matching
-match_threshold = 1.25;
-dist_threshold = 10;
+match_threshold = 1.5;  % lower = more matches
+dist_threshold = 8;  % lower = less inliers
 iter = 10000;  % --> 25000
 
 % For Harris
@@ -22,8 +22,10 @@ do_edges = 0;
 % Use Oxford SIFT as well
 do_oxford = 1;
 
-% Local BA
-do_local_BA = 0;
+% Bundle adjustment
+do_local_BA = 1;
+do_incremental_BA = 0;
+do_full_BA = 0;
 
 
 %% Load images
@@ -114,6 +116,7 @@ if ~exist('matches/matches_final.mat', 'file')
     
     % Cell array of matches per frame pair
     matches_8pt_RANSAC = {};
+    matches = {};  % before RANSAC (within bounding box)
     
     % Loop over images
     for i = 1:size(sift, 2)
@@ -121,18 +124,19 @@ if ~exist('matches/matches_final.mat', 'file')
         fprintf('8-point RANSAC, image %d\n', i)
         
         % Do 8-point RANSAC
-        [~, inliers_1, inliers_2, inliers_idx] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
-        matches_8pt_RANSAC{1, i} = inliers_idx;
+        [~, inliers_1, inliers_2, matches_8pt_RANSAC{1, i}, matches{1, i}] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
          
         if i ~= size(sift, 2)
             figure;
             showMatchedFeatures(images(:, :, :, i), images(:, :, :, i+1), inliers_1, inliers_2)
         else
             figure;
-            showMatchesFeatures(images(:, :, :, i), images(:, :, :, 1), inliers_1, inliers_2)
+            showMatchedFeatures(images(:, :, :, i), images(:, :, :, 1), inliers_1, inliers_2)
         end
     end
-
+    
+    % Save
+    save('matches/matches_bR_final', 'matches')
     save('matches/matches_final', 'matches_8pt_RANSAC')
     
 else
@@ -141,8 +145,7 @@ else
 end
 
 % If you want to plot a specific pair
-showMatchedFeatures(images(:, :, :, 18), images(:, :, :, 19), sift{1, 18}(1:2, matches_8pt_RANSAC{1, 18}(1, :))', sift{1, 19}(1:2, matches_8pt_RANSAC{1, 18}(2, :))')
-
+% showMatchedFeatures(images(:, :, :, 1), images(:, :, :, 2), sift{1, 1}(1:2, matches_8pt_RANSAC{1, 1}(1, :))', sift{1, 2}(1:2, matches_8pt_RANSAC{1, 1}(2, :))')
 
 %% Chaining (8 pts)
 
@@ -155,104 +158,124 @@ point_view_matrix = chaining_2(matches_8pt_RANSAC);
 
 disp('Stitching...')
 
-% Cells to store 3D point set for each set of frames & set of points that
-%   are common between 2 consecutive sets
-S = {};
-M = {};
-points = {};
-points_common = {};
-pvm = {};  % for new version (indices instead of coords)
-colors = {};
+if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat', 'file')
 
-% Use n consecutive frames each time
-consec = [3 4];
-count = 0;
+    % Cells to store 3D point set for each set of frames & set of points that
+    %   are common between 2 consecutive sets
+    S = {};
+    M = {};
+    affine_amb_solved = zeros(2, 19);
+    points_center = {};
+    points_common = {};
+    pvm = {};  % for new version (indices instead of coords)
+    colors = {};
 
-for n = 1:length(consec)
-    for f = 0:size(point_view_matrix, 1) - 1
+    % Use n consecutive frames each time
+    consec = [3 4];
+    count = 0;
 
-        % Shift (cell) array circularly (current set of frames)
-        pv_matrix_circ = circshift(point_view_matrix, -f, 1);
-        sift_circ = circshift(sift, -f, 2);
+    for n = 1:length(consec)
+        for f = 0:size(point_view_matrix, 1) - 1
 
-        % Shift one more (next set of frames)
-        pv_matrix_circ_next = circshift(point_view_matrix, -f-1, 1);
-        sift_circ_next = circshift(sift, -f-1, 2); 
+            % Shift (cell) array circularly (current set of frames)
+            pv_matrix_circ = circshift(point_view_matrix, -f, 1);
+            sift_circ = circshift(sift, -f, 2);
 
-        % Get x, y for each SIFT descriptor (for current & next set)
-        point = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
-        % point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
-        
-        % Write to new pv matrix for new version
-        pvm{n, f+1} = pv_matrix_circ(1:consec(n), :);
-        pvm{n, f+1}(:, ~all(pvm{n, f+1}, 1)) = [];
-        
-        % Next set is shifted by 1 w.r.t. current set, so look for points that
-        %   are present in the last 3 frames of current set, and first 3 frames
-        %   of next set --> you end up with points that were visible for 5
-        %   consecutive frames, which form the connection between both sets
-        % 1:end-2 and 3:end since rows are alternating x & y
-        % [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(point_next(1:end-2, :)', point(3:end, :)', 'rows', 'stable');
+            % Shift one more (next set of frames)
+            pv_matrix_circ_next = circshift(point_view_matrix, -f-1, 1);
+            sift_circ_next = circshift(sift, -f-1, 2); 
 
-        % Get color for later plotting
-        color = [images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
-                 images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 2*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
-                 images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 3*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)])))];
+            % Get x, y for each SIFT descriptor (for current & next set)
+            point = get_points(sift_circ(1, 1:consec(n)), pv_matrix_circ(1:consec(n), :));
+            % point_next = get_points(sift_circ_next(1, 1:consec(n)), pv_matrix_circ_next(1:consec(n), :));
 
-        % Only do if there are at least 3 points
-        if size(point, 2) > 2
-            
-            % Center points
-            N_cam = size(point, 1) / 2; N_pt = size(point, 2);
-            point_center = point - repmat(sum(point, 2) / N_pt, 1, N_pt);
-            
-            % Perform structure-from-motion and solve for affine ambiguity
-            [M{n, f+1}, S{n, f+1}] = SfM(point_center);
-            colors{n, f+1} = color;
-            points{n, f+1} = point;
-            
-            % Do bundle adjustment
-            if do_local_BA
-                
-                % x = D (measurement matrix) = point_center
-                % PX = M * S --> reshape M & S to 1 vector to allow concurrent
-                %   optimization
-                MS_0 = [M{n, f+1}(:); S{n, f+1}(:)];
-                % 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16
-                % options = optimoptions(@lsqnonlin, 'Algorithm', 'levenberg-marquardt', 'InitDamping', 1e2, 'ScaleProblem', 'jacobian', 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'Display', 'iter');
-                % MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
-                options = optimoptions(@fminunc, 'Display', 'iter');
-                MS = fminunc(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, options);
+            % Write to new pv matrix for new version
+            pvm{n, f+1} = pv_matrix_circ(1:consec(n), :);
+            pvm{n, f+1}(:, ~all(pvm{n, f+1}, 1)) = [];
 
-                % Reshape back
-                M_BA = reshape(MS(1:N_cam*6), [2*N_cam 3]);
-                S_BA = reshape(MS(end-3*N_pt+1:end), [3 N_pt]);
+            % Next set is shifted by 1 w.r.t. current set, so look for points that
+            %   are present in the last 3 frames of current set, and first 3 frames
+            %   of next set --> you end up with points that were visible for 5
+            %   consecutive frames, which form the connection between both sets
+            % 1:end-2 and 3:end since rows are alternating x & y
+            % [K, points_common{n+count+1, f+1}, points_common{n+count, f+1}] = intersect(point_next(1:end-2, :)', point(3:end, :)', 'rows', 'stable');
 
-                % Put in final array
-                S{n, f+1} = S_BA;
-                M{n, f+1} = M_BA;
-                
+            % Get color for later plotting
+            color = [images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
+                     images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 2*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)]))); ...
+                     images(sub2ind(size(images), uint16(point(2, :)), uint16(point(1, :)), 3*ones([1, size(point, 2)]), f+1 * ones([1, size(point, 2)])))];
+
+            % Only do if there are at least 3 points
+            if size(point, 2) > 2
+
+                % Center points
+                N_cam = size(point, 1) / 2; N_pt = size(point, 2);
+                point_center = point - repmat(sum(point, 2) / N_pt, 1, N_pt);
+
+                % Perform structure-from-motion and solve for affine ambiguity
+                [M{n, f+1}, S{n, f+1}, affine_amb_solved(n, f+1)] = SfM(point_center);
+                colors{n, f+1} = color;
+                points_center{n, f+1} = point_center;
+
+                % figure
+                % pcshow(pointCloud(S{n, f+1}', 'Color', colors{n, f+1}'))
+
+                % Do bundle adjustment
+                if do_local_BA
+
+                    % x = D (measurement matrix) = point_center
+                    % PX = M * S --> reshape M & S to 1 vector to allow concurrent
+                    %   optimization
+                    MS_0 = [S{n, f+1}(:); M{n, f+1}(:)];
+                    % 'StepTolerance',1e-16,'OptimalityTolerance',1e-16,'FunctionTolerance',1e-16
+                    % options = optimoptions(@lsqnonlin, 'Algorithm', 'levenberg-marquardt', 'InitDamping', 1e2, 'ScaleProblem', 'jacobian', 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'Display', 'iter');
+                    % MS = lsqnonlin(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, [], [], options);
+                    options = optimoptions(@fminunc, 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'MaxFunctionEvaluations', 1e6, 'Display', 'iter');
+                    MS = fminunc(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, options);
+
+                    % Reshape back
+                    S_BA = reshape(MS(1:N_pt*3), [3 N_pt]);
+                    M_BA = reshape(MS(end-N_cam*6+1:end), [2*N_cam 3]);
+
+                    % Put in final array
+                    S{n, f+1} = S_BA;
+                    M{n, f+1} = M_BA;
+
+                end
             end
         end
+
+        % Increment count to write in next 2 rows
+        count = count + 1;
+
+    end
+
+    % Construct models for new version
+    triple_models = {};
+    quad_models = {};
+
+    for v = 1:size(S, 2)
+
+        triple_models{v, 1} = S{1, v};
+        triple_models{v, 2} = pvm{1, v};
+        triple_models{v, 3} = colors{1, v}';
+        triple_models{v, 4} = M{1, v};
+        triple_models{v, 5} = points_center{1, v};
+        quad_models{v, 1} = S{2, v};
+        quad_models{v, 2} = pvm{2, v};
+        quad_models{v, 3} = colors{2, v}';
+        quad_models{v, 4} = M{2, v};
+        quad_models{v, 5} = points_center{2, v};
+
     end
     
-    % Increment count to write in next 2 rows
-    count = count + 1;
+    save('models/triple_models', 'triple_models')
+    save('models/quad_models', 'quad_models')
     
-end
-
-% Construct models for new version
-triple_models = {};
-quad_models = {};
-
-for v = 1:size(S, 2)
+else
     
-    triple_models{v, 1} = S{1, v};
-    triple_models{v, 2} = pvm{1, v};
-    triple_models{v, 3} = colors{1, v}';
-    quad_models{v, 1} = S{2, v};
-    quad_models{v, 2} = pvm{2, v};
-    quad_models{v, 3} = colors{2, v}';
+    load('models/triple_models', 'triple_models')
+    load('models/quad_models', 'quad_models')
     
 end
 
@@ -364,13 +387,33 @@ end
 % stitching_new
 % stitching_new_2
 
-[complete_model, complete_colors, ~, ~] = model_stitching_r(triple_models, quad_models);
-scene = pointCloud(complete_model', 'Color', complete_colors);
+[complete_S, complete_colors, complete_M, complete_D, ~, ~] = model_stitching_r(triple_models, quad_models, do_incremental_BA);
 
 % Check for close points in some way? --> can be done using pcmerge
 
 
 %% Bundle adjustment (4 pts)
+
+if do_full_BA
+    
+    disp('Full bundle adjustment...')
+            
+    % Do bundle adjustment
+    N_cam = size(complete_D, 1) / 2; N_pt = size(complete_D, 2);
+    MS_0 = [complete_S(:); complete_M(:)];
+    % options = optimoptions(@fminunc, 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'MaxFunctionEvaluations', 1e7, 'Display', 'iter');
+    options = optimoptions(@fminunc, 'MaxIterations', 1, 'Display', 'iter');
+    MS = fminunc(@(x)bundle_adjustment(complete_D, x, N_cam, N_pt), MS_0, options);
+
+    % Reshape back
+    S_BA = reshape(MS(1:N_pt*3), [3 N_pt]);
+    M_BA = reshape(MS(end-N_cam*6+1:end), [2*N_cam 3]);
+
+    % Put in final array
+    complete_S = S_BA;
+    complete_M = M_BA;
+    
+end
 
 % disp('Bundle adjustment...')
 % 
@@ -392,14 +435,17 @@ scene = pointCloud(complete_model', 'Color', complete_colors);
 
 %% Eliminate affine ambiguity (4 pts)
 
-% Already in SfM?
+% Already in SfM? --> yes
 
 
 %% 3D model plotting (4 pts)
 
+scene = pointCloud(complete_S', 'Color', complete_colors);
+
 [scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
+% [scene, ~] = pcdenoise(scene, 'NumNeighbors', 50, 'Threshold', 0.001);
 
 figure;
-pcshow(scene, 'MarkerSize', 15)
+pcshow(scene, 'MarkerSize', 50)
 % title(num2str(d_sum));
 

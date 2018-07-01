@@ -4,8 +4,8 @@
 
 clc; clear; % close all
 
-run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
-% run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
+% run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
 
@@ -34,20 +34,20 @@ disp('Loading images...')
 % Images
 image_files = dir('model_castle_png/*.png');
 
-for i = 1:length(image_files)
-    
-    current_image = imread([image_files(i).folder '/' image_files(i).name]);
-    
-    % Initialize arrays based on image size
-    if i == 1
-        images = uint8(zeros([size(current_image) length(image_files)]));
-        images_gray = uint8(zeros([size(current_image, 1) size(current_image, 2) length(image_files)]));
-    end
-    
-    images(:, :, :, i) = uint8(current_image);
-    images_gray(:, :, i) = rgb2gray(current_image);   
-   
-end
+% for i = 1:length(image_files)
+%     
+%     current_image = imread([image_files(i).folder '/' image_files(i).name]);
+%     
+%     % Initialize arrays based on image size
+%     if i == 1
+%         images = uint8(zeros([size(current_image) length(image_files)]));
+%         images_gray = uint8(zeros([size(current_image, 1) size(current_image, 2) length(image_files)]));
+%     end
+%     
+%     images(:, :, :, i) = uint8(current_image);
+%     images_gray(:, :, i) = rgb2gray(current_image);   
+%    
+% end
 
  
 %% Feature point detection & extraction of SIFT descriptors (2 pts)
@@ -277,11 +277,37 @@ end
 
 disp('Plotting...')
 
-scene = pointCloud(complete_S', 'Color', complete_colors);
+% Rotation matrices to get castle upright
+theta = pi/4;
+phi = pi/8;
+Rx = [1 0 0;...
+    0 cos(theta) -sin(theta);...
+    0 sin(theta) cos(theta)];
+Ry = [cos(phi) 0 sin(phi);...
+    0 1 0;...
+    -sin(phi) 0 cos(phi)];
+xyz = Ry * Rx * complete_S;
 
+% Define a pointcloud with color
+scene = pointCloud(xyz', 'Color', complete_colors);
+
+% Reduce noise in pointcloud
 [scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
-% [scene, ~] = pcdenoise(scene, 'NumNeighbors', 50, 'Threshold', 0.001);
+% [scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.01);
 
+% Show pointcloud plot
 figure;
 pcshow(scene, 'MarkerSize', 50)
+
+% Show surface plot
+figure;
+P = scene.Location;
+x = P(:,1);
+y = P(:,2);
+z = P(:,3);
+% Create boundaries for surfaces
+[~,S] = alphavol(P, 50);
+colors = double(scene.Color);
+trisurf(S.bnd, x, y, z, (1:length(x)), 'LineStyle', 'none');
+colormap((colors)./255)
 

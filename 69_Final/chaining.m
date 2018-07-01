@@ -46,18 +46,18 @@ point_view_matrix(:, ia(2:end)) = point_view_matrix(:, ia(2:end)) + point_view_m
 point_view_matrix(:, ib(2:end)) = [];  % delete moved points in last frame
 
 % Find matches between 1st & last frame without a column (yet)
-nonzero_last = find(point_view_matrix(end,:));
-nonzero_first = find(point_view_matrix(1,:));
-no_member = ~ismember(nonzero_last,nonzero_first);
+nonzero_last = find(point_view_matrix(end, :));
+nonzero_first = find(point_view_matrix(1, :));
+no_member = ~ismember(nonzero_last, nonzero_first);
 nonzero_last = nonzero_last(no_member);
-tocopy = point_view_matrix(:,nonzero_last);
+tocopy = point_view_matrix(:, nonzero_last);
 
 % Put these before 1st frame
-point_view_matrix(:,nonzero_last) = [];
+point_view_matrix(:, nonzero_last) = [];
 point_view_matrix = [tocopy point_view_matrix];
 
 % Copy extra row elements to 1st row, delete last row
-point_view_matrix(1,1:size(tocopy,2)) = point_view_matrix(end,1:size(tocopy,2));
+point_view_matrix(1 ,1:size(tocopy, 2)) = point_view_matrix(end, 1:size(tocopy, 2));
 point_view_matrix = point_view_matrix(1:size(matches, 2),:); 
    
 end

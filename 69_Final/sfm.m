@@ -1,4 +1,4 @@
-function [M, S, affine_amb_solved] = SfM(points_center)
+function [M, S, affine_amb_solved] = sfm(points_center)
 % SFM Performs structure-from-motion and eliminates the affine ambiguity.
 %
 % Inputs:

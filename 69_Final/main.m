@@ -2,9 +2,9 @@
 % 
 % Jesse Hagenaars & Michiel Mollema - 01.07.2018
 
-clc; clear; % close all
+clc; clear; close all
 
-run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
+% run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
 %% Settings
@@ -168,7 +168,9 @@ if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat'
     points_center = {};  % centered image coordinates
     pvm_dense = {};  % dense subblocks in point-view matrix
     colors = {};  % keep track of colors
-
+    reprojection_error_before = {};  % keep track of reprojection errors before and after local BA
+    reprojection_error_after = {};
+    
     % Use n consecutive frames each time
     consec = [3 4];
     count = 0;
@@ -201,7 +203,7 @@ if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat'
                 point_center = point - repmat(sum(point, 2) / N_pt, 1, N_pt);
 
                 % Perform structure-from-motion and solve for affine ambiguity
-                [M{n, f+1}, S{n, f+1}, affine_amb_solved(n, f+1)] = SfM(point_center);
+                [M{n, f+1}, S{n, f+1}, affine_amb_solved(n, f+1)] = sfm(point_center);
                 
                 % Save colors and centered image coordinates
                 colors{n, f+1} = color;
@@ -210,19 +212,26 @@ if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat'
                 % Do local bundle adjustment
                 if do_local_BA
                     
+                    % Reprojection error before
+                    reprojection_error_before{n, f+1} = sum(sum(abs(point_center - M{n, f+1} * S{n, f+1})));
+                    
                     % Reshape as 1 vector to allow concurrent optimization
                     %   of both M & S
                     MS_0 = [S{n, f+1}(:); M{n, f+1}(:)];
-                    options = optimoptions(@fminunc, 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'MaxFunctionEvaluations', 1e6, 'Display', 'iter');
+                    options = optimoptions(@fminunc, 'StepTolerance', 1e-16, 'OptimalityTolerance', 1e-16, 'FunctionTolerance', 1e-16, 'MaxFunctionEvaluations', 1e8, 'Display', 'iter', 'PlotFcn', ...
+                                           {@optimplotx,@optimplotfval,@optimplotresnorm,@optimplotstepsize});
                     MS = fminunc(@(x)bundle_adjustment(point_center, x, N_cam, N_pt), MS_0, options);
 
                     % Reshape back
                     S_BA = reshape(MS(1:N_pt*3), [3 N_pt]);
                     M_BA = reshape(MS(end-N_cam*6+1:end), [2*N_cam 3]);
-
+                    
+                    % Reprojection error after
+                    reprojection_error_after{n, f+1} = sum(sum(abs(point_center - M_BA * S_BA)));
+                    
                     % Put in final array
                     S{n, f+1} = S_BA;
-                    M{n, f+1} = M_BA;
+                    M{n, f+1} = M_BA;                    
 
                 end
             end
@@ -244,11 +253,19 @@ if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat'
         triple_models{v, 3} = colors{1, v}';
         triple_models{v, 4} = M{1, v};
         triple_models{v, 5} = points_center{1, v};
+        
         quad_models{v, 1} = S{2, v};
         quad_models{v, 2} = pvm_dense{2, v};
         quad_models{v, 3} = colors{2, v}';
         quad_models{v, 4} = M{2, v};
         quad_models{v, 5} = points_center{2, v};
+        
+        if do_local_BA
+            triple_models{v, 6} = reprojection_error_before{1, v};
+            triple_models{v, 7} = reprojection_error_after{1, v};
+            quad_models{v, 6} = reprojection_error_before{2, v};
+            quad_models{v, 7} = reprojection_error_after{2, v};
+        end
 
     end
     
@@ -279,9 +296,35 @@ disp('Plotting...')
 
 scene = pointCloud(complete_S', 'Color', complete_colors);
 
-[scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
-% [scene, ~] = pcdenoise(scene, 'NumNeighbors', 50, 'Threshold', 0.001);
+[scene, inliers] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
+% [scene, inliers] = pcdenoise(scene, 'NumNeighbors', 50, 'Threshold', 0.001);
 
 figure;
 pcshow(scene, 'MarkerSize', 50)
 
+%% Surf
+
+xyz = scene.Location;
+x = xyz(:,1);
+y = xyz(:,2);
+z = xyz(:,3);
+
+colors_denoised = double(complete_colors(inliers,:));
+
+triangles = [];
+for i = 1:length(x)
+    [ind] = findNearestNeighbors(scene,scene.Location(i,:),5);
+    triangles = [triangles; i ind(2:3)'; i ind(4:5)'];
+end
+
+[~,K]  =alphavol(xyz,25);
+
+figure()
+trisurf(triangles,x,y,z,1:length(x),'LineStyle','none')
+colormap(colors_denoised/255)
+
+
+figure()
+trisurf(K.bnd,x,y,z,(1:length(x)),'LineStyle','none')
+
+colormap(colors_denoised/255)

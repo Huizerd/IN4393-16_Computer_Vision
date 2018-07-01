@@ -1,4 +1,4 @@
-function point_view_matrix = chaining(matches_cell)
+function point_view_matrix = chaining_old(matches_cell)
 % CHAINING Constructs the point-view matrix with the matches found between
 %   consecutive frames. This matrix has tracked points as columns, and
 %   views/frames as rows and contains the indices of the descriptor for

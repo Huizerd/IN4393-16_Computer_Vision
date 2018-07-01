@@ -310,7 +310,7 @@ location = Ry * Rx * complete_S;
 scene = pointCloud(location', 'Color', complete_colors);
 
 % Reduce noise in point cloud
-[scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
+[scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);  % 0.01 for less accurate but more complete surface plot
 
 % Show pointcloud plot
 figure;

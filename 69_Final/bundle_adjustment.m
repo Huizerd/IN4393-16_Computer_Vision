@@ -1,6 +1,19 @@
 function E = bundle_adjustment(D, MS, m, n)
+% BUNDLE_ADJUSTMENT Performs bundle adjustment, a.k.a. minimizes the
+%   reprojection error.
+%
+% Inputs:
+% - D: centered image coordinates
+% - MS: vector containing both the camera motion matrix & 3D point matrix
+% - m: number of cameras
+% - n: number of points
+%
+% Outputs:
+% - E: reprojection error to minimize
+% 
+% Jesse Hagenaars & Michiel Mollema - 01.07.2018
 
-% Error to minimize
+% Reprojection error
 E = 0;
 
 % Reshape back to M & S
@@ -10,8 +23,7 @@ M = reshape(MS(end-m*6+1:end), [2*m 3]);
 % To make more readable
 PX = M * S;
 
-% E = D - PX;
-
+% Compute reprojection error
 for i = 1:m
     for j = 1:n
         
@@ -19,5 +31,4 @@ for i = 1:m
         
     end
 end
-
 end

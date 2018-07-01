@@ -1,6 +1,6 @@
 % IN4393-16: Final Assignment
 % 
-% Jesse Hagenaars & Michiel Mollema - 04.06.2018
+% Jesse Hagenaars & Michiel Mollema - 01.07.2018
 
 clc; clear; close all
 
@@ -12,20 +12,20 @@ run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % For RANSAC & matching
 match_threshold = 1.5;  % lower = more matches
 dist_threshold = 8;  % lower = less inliers
-iter = 10000;  % --> 25000
+iter = 10000;
 
 % For Harris
-sigma = 1.2.^(-9:12);
-threshold_R = 1e-5;
-do_edges = 0;
+sigma = 1.2.^(-9:12);  % sigma scales
+threshold_R = 1e-5;  % cornerness threshold
+do_edges = 0;  % output of Canny as input
 
 % Use Oxford SIFT as well
 do_oxford = 1;
 
 % Bundle adjustment
-do_local_BA = 1;
-do_incremental_BA = 0;
-do_full_BA = 0;
+do_local_BA = 1;  % locally per set of 3-4 images
+do_incremental_BA = 0;  % between set last stitched to main view and current set
+do_full_BA = 0;  % complete set at once
 
 
 %% Load images
@@ -55,6 +55,7 @@ end
 
 % Harris-affine & Hessian-affine SIFT obtained using detectors from
 %   http://www.robots.ox.ac.uk/~vgg/research/affine/detectors.html
+% Obtained with a threshold of 10
 harris_files = dir('features/*.png.haraff.sift');
 hessian_files = dir('features/*.png.hesaff.sift');
 
@@ -65,12 +66,9 @@ if ~exist('features/sift_final.mat', 'file')
 
     for i = 1:size(images_gray, 3)
         
-        fprintf('Finding corners with Harris & detecting SIFT, image %d\n', i)
+        fprintf('Finding corners with Harris & detecting SIFT, image %d...\n', i)
         
-        % Gaussian filter to smooth image
-        % smooth = uint8(conv2(gaussian(3), gaussian(3), images_gray(:, :, i), 'same'));
-        
-        % Detect edges if do_edges
+        % Detect edges first if do_edges
         if do_edges
             image = edge(images_gray(:, :, i), 'Sobel');
         else
@@ -93,7 +91,6 @@ if ~exist('features/sift_final.mat', 'file')
             sift{2, i} = [sift{2, i} oxford_combined(:, 6:end)'];      
             
         end
-
     end
     
     % Save
@@ -115,17 +112,18 @@ end
 if ~exist('matches/matches_final.mat', 'file')
     
     % Cell array of matches per frame pair
-    matches_8pt_RANSAC = {};
-    matches = {};  % before RANSAC (within bounding box)
+    matches_8pt_RANSAC = {};  % matches after 8-point RANSAC
+    matches = {};  % matches before RANSAC (within bounding box)
     
     % Loop over images
     for i = 1:size(sift, 2)
 
-        fprintf('8-point RANSAC, image %d\n', i)
+        fprintf('8-point RANSAC, image %d...\n', i)
         
         % Do 8-point RANSAC
         [~, inliers_1, inliers_2, matches_8pt_RANSAC{1, i}, matches{1, i}] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i);
-         
+        
+        % Plot matches for each pair
         if i ~= size(sift, 2)
             figure;
             showMatchedFeatures(images(:, :, :, i), images(:, :, :, i+1), inliers_1, inliers_2)
@@ -140,35 +138,38 @@ if ~exist('matches/matches_final.mat', 'file')
     save('matches/matches_final', 'matches_8pt_RANSAC')
     
 else
+    
     disp('Loading matches...')
-    load('matches/matches_final', 'matches_8pt_RANSAC')  
+    
+    % Load already matched & RANSAC'ed features
+    load('matches/matches_final', 'matches_8pt_RANSAC') 
+    
 end
 
-% If you want to plot a specific pair
-% showMatchedFeatures(images(:, :, :, 1), images(:, :, :, 2), sift{1, 1}(1:2, matches_8pt_RANSAC{1, 1}(1, :))', sift{1, 2}(1:2, matches_8pt_RANSAC{1, 1}(2, :))')
 
 %% Chaining (8 pts)
 
 disp('Chaining...')
 
-point_view_matrix = chaining_2(matches_8pt_RANSAC);
+point_view_matrix = chaining(matches_8pt_RANSAC);
 
 
 %% Stitching (12 pts)
 
 disp('Stitching...')
 
+% Construt sets of 3/4 frames if they don't already exist
 if ~exist('models/triple_models.mat', 'file') || ~exist('models/quad_models.mat', 'file')
 
-    % Cells to store 3D point set for each set of frames & set of points that
-    %   are common between 2 consecutive sets
+    % Cells to store 3D point set for each set of frames & set of points
+    %   that are common between 2 consecutive sets
     S = {};
     M = {};
-    affine_amb_solved = zeros(2, 19);
+    affine_amb_solved = zeros(2, 19);  % indicate whether solved or not
     points_center = {};
     points_common = {};
     pvm = {};  % for new version (indices instead of coords)
-    colors = {};
+    colors = {};  % keep track of colors
 
     % Use n consecutive frames each time
     consec = [3 4];

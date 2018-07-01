@@ -5,6 +5,7 @@ matches/
 model_castle_png/
 features/
 sba-1.6/
+old/
 
 # Ignore MATLAB temp files
 *.asv

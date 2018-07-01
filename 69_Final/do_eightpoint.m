@@ -1,14 +1,15 @@
 function [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx, new_matches] = do_eightpoint(sift, match_threshold, dist_threshold, iter, i)
 % DO_EIGHTPOINT Performs 8-point algorithm between two images. First
-% extracts coordinates and descriptors from SIFT features, matches the
-% descriptors, keeps only interesting matches and then performs 8-point
-% algorithm on these matches.
+%   extracts coordinates and descriptors from SIFT features, matches the
+%   descriptors, keeps only interesting matches and then performs 8-point
+%   algorithm on these matches.
 % 
 % Inputs:
 % - sift: cell-array containing SIFT features for both images
 % - match_threshold: threshold used in feature matching
 % - dist_threshold: threshold used in 8-point algorithm Sampson-distance
 %   calculation
+% - iter: number of iterations for RANSAC
 % - i: current index in SIFT features cell-array
 % 
 % Outputs:
@@ -25,24 +26,24 @@ function [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx, new_matches]
 if i < size(sift, 2)
     
     % Get coords and descriptors
-    x1 = sift{1,i}(1,:);
-    y1 = sift{1,i}(2,:);
-    desc1 = sift{2,i}(:,:);
+    x1 = sift{1, i}(1, :);
+    y1 = sift{1, i}(2, :);
+    desc1 = sift{2, i}(:, :);
 
-    x2 = sift{1,i+1}(1,:);
-    y2 = sift{1,i+1}(2,:);
-    desc2 = sift{2,i+1}(:,:);
+    x2 = sift{1, i+1}(1, :);
+    y2 = sift{1, i+1}(2, :);
+    desc2 = sift{2, i+1}(:, :);
     
 else
     
     % Last pair: last & 1st image
-    x1 = sift{1,i}(1,:);
-    y1 = sift{1,i}(2,:);
-    desc1 = sift{2,i}(:,:);
+    x1 = sift{1, i}(1, :);
+    y1 = sift{1, i}(2, :);
+    desc1 = sift{2, i}(:, :);
 
-    x2 = sift{1,1}(1,:);
-    y2 = sift{1,1}(2,:);
-    desc2 = sift{2,1}(:,:);
+    x2 = sift{1, 1}(1, :);
+    y2 = sift{1, 1}(2, :);
+    desc2 = sift{2, 1}(:, :);
     
 end
 

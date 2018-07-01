@@ -1,18 +1,26 @@
-function [r, c] = harris(im, sigma, threshold_R)
-% inputs: 
-% im: double grayscale image
-% sigma: integration-scale
-% outputs:  The row and column of each point is returned in r and c
-% This function finds Harris corners at integration-scale sigma.
-% The derivative-scale is chosen automatically as gamma*sigma
+function [r, c] = harris(image, sigma, threshold_R)
+% HARRIS Detects Harris corners at integration-scale sigma in a grayscale
+%   image.
+%
+% Inputs:
+% - image: grayscale image
+% - sigma: integration scale to use
+% - threshold_R: cornerness threshold
+%
+% Outputs:
+% - r: rows of detected corners in image
+% - c: columns of detected corners in image
+%
+% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% Skeleton written by IN4393-16 staff
 
-gamma = 0.7; % The derivative-scale is gamma times the integration scale
+% The derivative-scale is gamma times the integration-scale sigma
+gamma = 0.7; 
 
-% Calculate Gaussian Derivatives at derivative-scale
-% Hint: use your previously implemented function in assignment 1 
-[Ix, Iy] = gradMag(im, sigma*gamma);
+% Calculate Gaussian derivatives at derivative scale
+[Ix, Iy] = grad_mag(image, sigma*gamma);
 
-% Allocate an 3-channel image to hold the 3 parameters for each pixel
+% Allocate a 3-channel image to hold the 3 parameters for each pixel
 M = zeros(size(Ix,1), size(Ix,2), 3);
 
 % Calculate M for each pixel
@@ -21,9 +29,9 @@ M(:,:,1) = Ix.^2;
 M(:,:,2) = Ix .* Iy;
 M(:,:,3) = Iy.^2;
 
-% Smooth M with a gaussian at the integration scale sigma.
+% Smooth M with a gaussian at the integration-scale sigma.
 M = imfilter(M, fspecial('gaussian', ceil(sigma*6+1), sigma), 'replicate', 'same');
-M = M * (sigma*gamma)^2;  % multiply with square of sigma_D
+M = M * (sigma*gamma)^2;  % multiply with square of derivative-scale sigma
 
 % Compute the cornerness R
 trace = M(:,:,1) + M(:,:,3);
@@ -39,11 +47,7 @@ threshold = threshold_R * max(max(R));
 % Find local maxima
 % Dilation will alter every pixel except local maxima in a 3x3 square area.
 % Also checks if R is above threshold
-R = ((R>threshold) & ((imdilate(R, strel('square', 3))==R))) ; %.* sigma;
-
-% Display corners
-% figure
-% imshow(R,[]);
+R = ((R > threshold) & ((imdilate(R, strel('square', 3)) == R)));
 
 % Return the coordinates
 [r,c] = find(R);

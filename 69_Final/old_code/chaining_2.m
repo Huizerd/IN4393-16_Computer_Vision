@@ -8,14 +8,14 @@ function point_view_matrix = chaining_2(matches)
 %   non-zero.
 %
 % Inputs:
-% - matches_cell: cell array containing matches, with descriptor indices
-%   for the 1st image in the 1st row, indices for the 2nd image in the 2nd
-%   row. Each cell contains one frame pair (1-2, 2-3, 3-4, ... , 16-1).
+% - matches: cell array containing matches, with descriptor indices for the
+%   1st image in the 1st row, indices for the 2nd image in the 2nd row.
+%   Each cell contains one frame pair (1-2, 2-3, 3-4, ... , 19-1).
 %
 % Outputs:
 % - point_view_matrix: matrix containing matches between consecutive frames
 %
-% Jesse Hagenaars - 04.06.2018
+% Jesse Hagenaars & Michiel Mollema - 04.06.2018
 
 % Frames/views as rows, tracked points as columns
 % Different approach for 1st pair (1-2)
@@ -45,19 +45,18 @@ end
 point_view_matrix(:, ia(2:end)) = point_view_matrix(:, ia(2:end)) + point_view_matrix(:, ib(2:end));  % skip 1st index (contains zeros)
 point_view_matrix(:, ib(2:end)) = [];  % delete moved points in last frame
 
-% Find matches between first and last frame that did not have a column
-% assigned to them
+% Find matches between 1st & last frame without a column (yet)
 nonzero_last = find(point_view_matrix(end,:));
 nonzero_first = find(point_view_matrix(1,:));
-no_member = ~ismember(nonzero_last,nonzero_first);          % Check for points not in row one
+no_member = ~ismember(nonzero_last,nonzero_first);
 nonzero_last = nonzero_last(no_member);
-tocopy = point_view_matrix(:,nonzero_last);                          % Matches to prepend to row one
+tocopy = point_view_matrix(:,nonzero_last);
 
-% Prepend new matches between first and last image
+% Put these before 1st frame
 point_view_matrix(:,nonzero_last) = [];
 point_view_matrix = [tocopy point_view_matrix];
 
-% Copy extra row elements to first row, and delete last row
+% Copy extra row elements to 1st row, delete last row
 point_view_matrix(1,1:size(tocopy,2)) = point_view_matrix(end,1:size(tocopy,2));
 point_view_matrix = point_view_matrix(1:size(matches, 2),:); 
    

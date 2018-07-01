@@ -20,5 +20,4 @@ for i = 1:size(M_hat, 1) / 2
     residuals(i, :) = D(:);
     
 end
-
 end

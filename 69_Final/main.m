@@ -7,6 +7,7 @@ clc; clear; close all
 % run('C:/Users/jesse/Documents/MATLAB/vlfeat/toolbox/vl_setup')
 % run('/home/michiel/Programs/MATLAB/vlfeat/toolbox/vl_setup')
 
+
 %% Settings
 
 % For RANSAC & matching
@@ -294,37 +295,36 @@ end
 
 disp('Plotting...')
 
-scene = pointCloud(complete_S', 'Color', complete_colors);
+% Rotation matrices to get castle upright
+theta = pi/4;
+phi = pi/8;
+Rx = [1 0 0;...
+    0 cos(theta) -sin(theta);...
+    0 sin(theta) cos(theta)];
+Ry = [cos(phi) 0 sin(phi);...
+      0 1 0;...
+     -sin(phi) 0 cos(phi)];
+location = Ry * Rx * complete_S;
 
-[scene, inliers] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
-% [scene, inliers] = pcdenoise(scene, 'NumNeighbors', 50, 'Threshold', 0.001);
+% Define a pointcloud with color
+scene = pointCloud(location', 'Color', complete_colors);
 
+% Reduce noise in point cloud
+[scene, ~] = pcdenoise(scene, 'NumNeighbors', 200, 'Threshold', 0.5);
+
+% Show pointcloud plot
 figure;
 pcshow(scene, 'MarkerSize', 50)
 
-%% Surf
+% Show surface plot
+figure;
+P = scene.Location;
+x = P(:,1);
+y = P(:,2);
+z = P(:,3);
 
-xyz = scene.Location;
-x = xyz(:,1);
-y = xyz(:,2);
-z = xyz(:,3);
-
-colors_denoised = double(complete_colors(inliers,:));
-
-triangles = [];
-for i = 1:length(x)
-    [ind] = findNearestNeighbors(scene,scene.Location(i,:),5);
-    triangles = [triangles; i ind(2:3)'; i ind(4:5)'];
-end
-
-[~,K]  =alphavol(xyz,25);
-
-figure()
-trisurf(triangles,x,y,z,1:length(x),'LineStyle','none')
-colormap(colors_denoised/255)
-
-
-figure()
-trisurf(K.bnd,x,y,z,(1:length(x)),'LineStyle','none')
-
-colormap(colors_denoised/255)
+% Create boundaries for surfaces
+[~, S] = alphavol(P, 30);  % 50 for less accurate but more complete surface plot
+colors = double(scene.Color);
+trisurf(S.bnd, x, y, z, (1:length(x)), 'LineStyle', 'none');
+colormap((colors)./255)

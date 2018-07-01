@@ -5,7 +5,7 @@ matches/
 model_castle_png/
 features/
 sba-1.6/
-old/
+old_code/
 figures/
 
 # Ignore MATLAB temp files

@@ -8,7 +8,7 @@ function [M, S, affine_amb_solved] = sfm(points_center)
 % Outputs:
 % - S: matrix of 3D points
 %
-% Jesse Hagenaars & Michiel Mollema - 11.06.2018
+% . & Michiel Mollema - 11.06.2018
 % Skeleton by IN4393-16 staff
 
 %% SVD

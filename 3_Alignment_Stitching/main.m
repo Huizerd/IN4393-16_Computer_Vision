@@ -1,5 +1,5 @@
 % Assignment 3: Image Alignment and Stitching
-% Jesse Hagenaars & Michiel Mollema - 19-03-2018
+% . & Michiel Mollema - 19-03-2018
 
 clear; clc
 

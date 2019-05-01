@@ -10,7 +10,7 @@ function points = get_points(sift, pv_matrix)
 % - points: matrix of x & y coordinates, shape (2 * N_frames, N_points),
 %   rows of x & y coordinates alternate (so 1st 2 rows belong to 1st frame)
 %
-% Jesse Hagenaars & Michiel Mollema - 11.06.2018
+% . & Michiel Mollema - 11.06.2018
 
 % Create (2 * N_frames, N_points) point matrix
 points = zeros(2 * size(pv_matrix, 1), size(pv_matrix, 2));

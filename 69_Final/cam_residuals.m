@@ -6,7 +6,7 @@ function residuals = cam_residuals(L, M_hat)
 % - residuals: matrix containing the residuals for the N cameras,
 %   shape (N, 4)
 %
-% Jesse Hagenaars & Michiel Mollema - 11.06.2018
+% . & Michiel Mollema - 11.06.2018
 % Written by IN4393-16 staff
 
 % Pre-allocate the residual matrix

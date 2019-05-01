@@ -15,7 +15,7 @@ function point_view_matrix = chaining(matches)
 % Outputs:
 % - point_view_matrix: matrix containing matches between consecutive frames
 %
-% Jesse Hagenaars & Michiel Mollema - 04.06.2018
+% . & Michiel Mollema - 04.06.2018
 
 % Frames/views as rows, tracked points as columns
 % Different approach for 1st pair (1-2)

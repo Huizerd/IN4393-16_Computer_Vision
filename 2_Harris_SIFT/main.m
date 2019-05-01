@@ -1,5 +1,5 @@
 % Assignment 2: Harris Corner Detector
-% Jesse Hagenaars & Michiel Mollema - 05-03-2018
+% . & Michiel Mollema - 05-03-2018
 
 sigma = 1.2.^(0:12);
 

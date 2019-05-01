@@ -11,7 +11,7 @@ function [r, c] = harris(image, sigma, threshold_R)
 % - r: rows of detected corners in image
 % - c: columns of detected corners in image
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 % Skeleton written by IN4393-16 staff
 
 % The derivative-scale is gamma times the integration-scale sigma

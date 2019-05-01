@@ -12,7 +12,7 @@ function [features, descriptors] = get_sift_harris(edges, image, sigma, threshol
 % - features: SIFT feature keypoints
 % - descriptors: SIFT feature descriptors
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
     
 % To store Laplacian
 laplacian = zeros([size(edges) length(sigma)]);

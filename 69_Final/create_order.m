@@ -9,7 +9,7 @@ function [triple_order, quad_order] = create_order(quad_models)
 % - triple_order: new stitching order for sets of 3
 % - quad_order: new stitching order for sets of 4
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 % Find biggest set of 4 to start with
 [~, idx_max_quad] = max(cellfun('size', quad_models(:, 1), 2));

@@ -1,6 +1,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Assignment 6: Matching -> 8-point algorithm
-% Jesse Hagenaars & Michiel Mollema - 28-05-2018
+% . & Michiel Mollema - 28-05-2018
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function [F_best, inliers_1, inliers_2] = eightpoint(x1, y1, x2, y2, best_matches, threshold)

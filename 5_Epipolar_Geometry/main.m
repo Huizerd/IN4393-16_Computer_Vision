@@ -1,5 +1,5 @@
 % Assignment 5: Epipolar Geometry
-% Jesse Hagenaars & Michiel Mollema - 07-05-2018
+% . & Michiel Mollema - 07-05-2018
 
 clear; clc
 threshold = 10;

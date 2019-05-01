@@ -19,7 +19,7 @@ function [F_ransac_denorm, inliers_1, inliers_2, inliers_match_idx, new_matches]
 % - inliers_2: coordinates of all inliers for second image
 % - inliers_match_idx: indices of inliers for use with initial match array
 % 
-% Jesse Hagenaars & Michiel Mollema - 11.06.2018
+% . & Michiel Mollema - 11.06.2018
 
 %% Get coordinates and descriptors
 

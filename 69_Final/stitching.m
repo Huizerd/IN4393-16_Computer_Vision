@@ -14,7 +14,7 @@ function [complete_S, complete_colors, complete_M, complete_D] = stitching(tripl
 % - complete_colors: colors for each point in the complete set
 % - complete_D: complete set of centered point coordinates in the image
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 %% Reorder
 

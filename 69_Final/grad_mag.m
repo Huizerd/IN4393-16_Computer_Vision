@@ -10,7 +10,7 @@ function [Ix, Iy] = grad_mag(image, sigma)
 % - Ix: gradient magnitude in x
 % - Iy: gradient magnitude in y
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 G = gaussian(sigma);
 

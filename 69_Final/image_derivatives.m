@@ -9,7 +9,7 @@ function F = image_derivatives(image, sigma, type)
 % Outputs:
 % - F: image convolved with Gaussian kernel
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 % Get Gaussian
 G = gaussian(sigma);

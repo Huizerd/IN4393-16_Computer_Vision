@@ -1,5 +1,5 @@
 % Assignment 1: Linear Filters: Gaussians and Derivatives
-% Jesse Hagenaars and Michiel Mollema - 19-02-2018
+% . and Michiel Mollema - 19-02-2018
 clc; clear; close all
 
 % Only first layer (all are equal)

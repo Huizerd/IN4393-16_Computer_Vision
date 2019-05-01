@@ -8,7 +8,7 @@ function Gdd = gaussian_der_der(G, sigma)
 % Outputs:
 % - Gd: 1D Gaussian double derivative kernel
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 % Range of kernel [-3*sigma, 3*sigma]
 sz = floor(3*sigma + 0.5);

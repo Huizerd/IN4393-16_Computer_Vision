@@ -1,6 +1,6 @@
 % IN4393-16: Final Assignment
 % 
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 clc; clear; close all
 

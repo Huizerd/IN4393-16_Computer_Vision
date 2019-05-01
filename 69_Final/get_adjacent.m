@@ -13,7 +13,7 @@ function [lower, upper] = get_adjacent(idx, direction, set_size, lower, upper)
 % - lower: new bottom
 % - upper: new top
 %
-% Jesse Hagenaars & Michiel Mollema - 01.07.2018
+% . & Michiel Mollema - 01.07.2018
 
 % First time
 if direction == 0
